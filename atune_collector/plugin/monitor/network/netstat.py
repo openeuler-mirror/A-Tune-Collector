@@ -99,7 +99,7 @@ class NetStat(Monitor):
             nic +
             r")\ {1,}(\d*\.?\d*)\ {1,}(\d*\.?\d*)\ {1,}(\d*\.?\d*)\ {1,}(\d*\.?\d*)"
             r"\ {1,}(\d*\.?\d*)\ {1,}(\d*\.?\d*)\ {1,}(\d*\.?\d*)\ {2,}(\d*\.?\d*)",
-            re.ASCII | re.MULTILINE)
+            re.UNICODE | re.MULTILINE)
         search_obj = pattern.findall(info)
         if len(search_obj) == 0:
             err = LookupError("Fail to find data for {}".format(nic))

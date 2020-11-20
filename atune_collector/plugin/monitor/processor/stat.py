@@ -142,7 +142,7 @@ class CpuStat(Monitor):
             r"^(\d.*?)\ {2,}(\d*|all)\ {2,}(\d*\.\d*)\ {2,}(\d*\.\d*)\ {2,}(\d*\.\d*)"
             r"\ {2,}(\d*\.\d*)\ {2,}(\d*\.\d*)\ {2,}(\d*\.\d*)\ {2,}(\d*\.\d*)\ {2,}(\d*\.\d*)"
             r"\ {2,}(\d*\.\d*)\ {2,}(\d*\.\d*)",
-            re.ASCII | re.MULTILINE)
+            re.UNICODE | re.MULTILINE)
         search_obj = pattern.findall(info)
         if len(search_obj) == 0:
             err = LookupError("Fail to find data for {}".format(cpu))

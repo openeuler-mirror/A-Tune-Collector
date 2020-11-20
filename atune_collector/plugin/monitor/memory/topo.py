@@ -47,7 +47,7 @@ class MemTopo(Monitor):
         """get locator in table"""
         pattern = re.compile(
             r"DIMM.*?(\d)(\d)(\d).*",
-            re.ASCII | re.MULTILINE)
+            re.UNICODE | re.MULTILINE)
         scd = pattern.findall(bank)
         if len(scd) == 0:
             LOGGER.info("slot: %s does not support to parse", bank)
@@ -62,7 +62,7 @@ class MemTopo(Monitor):
         """get freq in table"""
         pattern = re.compile(
             r".*?(\d+)\s([KMGT]?)Hz.*?",
-            re.ASCII | re.MULTILINE)
+            re.UNICODE | re.MULTILINE)
         freq = pattern.findall(desc)
         if len(freq) == 0:
             err = LookupError("Fail to find data")
@@ -90,8 +90,9 @@ class MemTopo(Monitor):
         :returns output:  converted result
         """
         if fmt in ("json", "table", "xml"):
-            o_json = subprocess.check_output("{cmd} -json".format(
-                cmd=self.__cmd).split(), stderr=subprocess.DEVNULL)
+            with open('/dev/null', 'w') as no_print:
+                o_json = subprocess.check_output("{cmd} -json".format(
+                    cmd=self.__cmd).split(), stderr=no_print)
             info = o_json.decode()
             json_content = json.loads(info)
 

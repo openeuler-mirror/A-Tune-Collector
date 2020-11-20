@@ -57,7 +57,7 @@ class Grub2(Configurator):
                 ".",
                 r"\.") +
             r"[^\{\}]*?(\})",
-            re.ASCII | re.DOTALL)
+            re.UNICODE | re.DOTALL)
         search_obj = pattern.search(ctx)
         if search_obj is None:
             err = LookupError("Fail to find {} menu entry in {}"

@@ -45,8 +45,9 @@ class SysBiosInfo(Monitor):
         :returns output:  converted result
         """
         if fmt in ("json", "xml"):
-            o_json = subprocess.check_output("{cmd} -json".format(
-                cmd=self.__cmd).split(), stderr=subprocess.DEVNULL)
+            with open("/dev/null") as no_print:
+                o_json = subprocess.check_output("{cmd} -json".format(
+                    cmd=self.__cmd).split(), stderr=no_print)
             info = o_json.decode()
             json_content = json.loads(info)
 

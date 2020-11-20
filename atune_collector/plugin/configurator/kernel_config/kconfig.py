@@ -57,7 +57,7 @@ class KernelConfig(Configurator):
             with open(self.__cfg_file, 'r') as file:
                 cfgs = file.read()
 
-        pattern = re.compile("^" + key + "=(.+)", re.ASCII | re.MULTILINE)
+        pattern = re.compile("^" + key + "=(.+)", re.UNICODE | re.MULTILINE)
         search_obj = pattern.findall(cfgs)
         if len(search_obj) != 1:
             err = Warning("not find one " + key)

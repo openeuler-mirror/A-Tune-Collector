@@ -25,7 +25,7 @@ from exceptions import SetConfigError
 LOGGER = logging.getLogger(__name__)
 
 
-class Configurator:
+class Configurator(object):
     """Base class for configurators"""
 
     # sub class should init these
@@ -45,7 +45,8 @@ class Configurator:
         """
         self._user = user
 
-    def module(self):
+    @classmethod
+    def module(cls):
         """
         Get the the module of this configurator.
 
@@ -53,9 +54,10 @@ class Configurator:
         :returns: The module of this configurator
         :raises: None
         """
-        return self._module
+        return cls._module
 
-    def submod(self):
+    @classmethod
+    def submod(cls):
         """
         Get the the sub module of this configurator.
 
@@ -63,7 +65,7 @@ class Configurator:
         :returns: The sub module of this configurator
         :raises: None
         """
-        return self._submod
+        return cls._submod
 
     def _getopt(self):
         """

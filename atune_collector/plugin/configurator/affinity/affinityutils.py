@@ -41,5 +41,5 @@ class Utils:
             output = subprocess.check_output("ps -e".split(),
                                              stderr=subprocess.STDOUT)
             pattern = r"^\ *(\d.*?)\ +.*?\ +.*?\ +" + name
-            task_id = re.findall(pattern, output.decode(), re.ASCII | re.MULTILINE)
+            task_id = re.findall(pattern, output.decode(), re.UNICODE | re.MULTILINE)
         return task_id

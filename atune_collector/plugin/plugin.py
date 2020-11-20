@@ -82,9 +82,9 @@ class MPI:
         """
         mpis = []
         for sub_class in Monitor.__subclasses__():
-            if (module is not None) and (sub_class.module(sub_class) != module):
+            if (module is not None) and (sub_class.module() != module):
                 continue
-            if (purpose is not None) and (sub_class.purpose(sub_class) != purpose):
+            if (purpose is not None) and (sub_class.purpose() != purpose):
                 continue
             m_class = sub_class()
             mpis.append(m_class)

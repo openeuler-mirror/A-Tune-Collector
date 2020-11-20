@@ -110,7 +110,7 @@ class IoStat(Monitor):
         rows_contents = resplitobj.split(info)
         dev = "Device|" + dev
         search_obj = []
-        pattern = re.compile("^(" + dev + r").+", re.ASCII)
+        pattern = re.compile("^(" + dev + r").+", re.UNICODE)
         for row in rows_contents:
             if pattern.match(row):
                 search_obj.append([data for data in row.split()])
