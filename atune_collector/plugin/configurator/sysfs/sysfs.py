@@ -35,7 +35,7 @@ class Sysfs(Configurator):
             ret = file.read()
 
         pattern = r".*\[(.*)\].*"
-        search_obj = re.search(pattern, ret, re.ASCII | re.MULTILINE)
+        search_obj = re.search(pattern, ret, re.UNICODE | re.MULTILINE)
         if search_obj is not None:
             return search_obj.group(1)
         return ret

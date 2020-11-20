@@ -104,7 +104,7 @@ class MemBandwidth(Monitor):
             stderr=subprocess.STDOUT).decode()
         self.__events = ""
         for event in self.__evs:
-            search_obj = re.search(self.__evs[event], all_events, re.ASCII | re.MULTILINE)
+            search_obj = re.search(self.__evs[event], all_events, re.UNICODE | re.MULTILINE)
             if search_obj is not None:
                 self.__events = self.__events + self.__evs[event] + ","
         self.__events = self.__events.strip(",")
@@ -223,7 +223,7 @@ class MemBandwidth(Monitor):
         for evs in self.__evs:
             pattern = r"^\ {2,}(\d.*?)\ {2,}(\d.*?)\ {2,}(" + \
                       self.__evs[evs] + ").*?"
-            search_obj = re.search(pattern, info, re.ASCII | re.MULTILINE)
+            search_obj = re.search(pattern, info, re.UNICODE | re.MULTILINE)
             if search_obj is not None:
                 c_evs[evs] = search_obj.group(2).replace(",", "")
             else:

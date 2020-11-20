@@ -21,7 +21,7 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 
-class Monitor:
+class Monitor(object):
     """Base class for monitors"""
 
     # sub class should init these
@@ -41,7 +41,8 @@ class Monitor:
         """
         self._user = user
 
-    def module(self):
+    @classmethod
+    def module(cls):
         """
         Get the the module of this monitor.
 
@@ -49,9 +50,10 @@ class Monitor:
         :returns: The module of this monitor
         :raises: None
         """
-        return self._module
+        return cls._module
 
-    def purpose(self):
+    @classmethod
+    def purpose(cls):
         """
         Get the the purpose of this monitor.
 
@@ -59,7 +61,7 @@ class Monitor:
         :returns: The purpose of this monitor
         :raises: None
         """
-        return self._purpose
+        return cls._purpose
 
     def _getopt(self):
         """

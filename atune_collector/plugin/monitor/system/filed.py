@@ -65,7 +65,7 @@ class SysFdUtil(Monitor):
 
         pattern = re.compile(
             r"^(\d*)\s{1,}(\d*)\s{1,}(\d*)",
-            re.ASCII | re.MULTILINE)
+            re.UNICODE | re.MULTILINE)
         search_obj = pattern.findall(info)
         if len(search_obj) == 0:
             err = LookupError("Fail to find data")

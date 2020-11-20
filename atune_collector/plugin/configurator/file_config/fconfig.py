@@ -57,7 +57,7 @@ class FileConfig(Configurator):
             raise GetConfigError("Fail to find file {}".format(key))
 
         config_key = value.split("=")[0] if value.find("=") != -1 else value
-        pattern = re.compile("^" + config_key + ".*", re.ASCII | re.DOTALL)
+        pattern = re.compile("^" + config_key + ".*", re.UNICODE | re.DOTALL)
         search_obj = []
         with open(key, 'r') as file:
             for line in file:

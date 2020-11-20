@@ -105,7 +105,7 @@ class MemVmstat(Monitor):
             r"^\ ?(\d*)\ {1,}(\d*)\ {1,}(\d*)\ {1,}(\d*)\ {1,}(\d*)\ {1,}(\d*)\ {1,}(\d*)"
             r"\ {1,}(\d*)\ {1,}(\d*)\ {1,}(\d*)\ {1,}(\d*)\ {1,}(\d*)\ {1,}(\d*)\ {1,}(\d*)"
             r"\ {1,}(\d*)\ {1,}(\d*)\ {1,}(\d*)",
-            re.ASCII | re.MULTILINE)
+            re.UNICODE | re.MULTILINE)
         search_obj = pattern.findall(info)
         if len(search_obj) == 0:
             err = LookupError("Fail to find data")

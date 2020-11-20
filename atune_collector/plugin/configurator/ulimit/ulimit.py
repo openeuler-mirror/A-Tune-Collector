@@ -46,7 +46,7 @@ class Ulimit(Configurator):
         """modify the config file"""
         with open(cfg_file, mode='r+', buffering=-1) as file:
             info = file.read()
-            pattern = re.compile(matching, re.ASCII | re.MULTILINE)
+            pattern = re.compile(matching, re.UNICODE | re.MULTILINE)
             search_obj = pattern.search(info)
             if search_obj is not None:
                 offset = search_obj.span(1)
@@ -96,7 +96,7 @@ class Ulimit(Configurator):
             r"\s+?" +
             keyword[2] +
             r"\s+(\w+)\s*?",
-            re.ASCII | re.MULTILINE)
+            re.UNICODE | re.MULTILINE)
         search_obj = pattern.findall(info)
         if len(search_obj) == 0:
             err = GetConfigError("Fail to find {} config".format(key))

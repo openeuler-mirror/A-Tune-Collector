@@ -124,7 +124,7 @@ class PerfStat(Monitor):
                 event = stat
             pattern = r"^\ {2,}(\d.*?)\ {2,}(\d.*?)\ {2,}(\w*)\ {2,}(" + \
                       event + r")\ {1,}.*"
-            search_obj = re.search(pattern, info, re.ASCII | re.MULTILINE)
+            search_obj = re.search(pattern, info, re.UNICODE | re.MULTILINE)
             if search_obj is not None:
                 self.__stat[stat] = int(search_obj.group(keyword["counts"] + 1).replace(",", ""))
             else:

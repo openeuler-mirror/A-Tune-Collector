@@ -122,14 +122,15 @@ class Script(Configurator):
         name = os.path.basename(key)
         script = "{}/resume.sh".format(os.path.join(self.scripts_path, key))
         if os.path.isfile(script):
-            output = subprocess.run(
-                "{script} {val}".format(
-                    script=script,
-                    val=value).split(),
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-                shell=False,
-                check=True)
+            with open('/dev/null', 'w') as no_print:
+                output = subprocess.run(
+                    "{script} {val}".format(
+                        script=script,
+                        val=value).split(),
+                    stdout=no_print,
+                    stderr=subprocess.PIPE,
+                    shell=False,
+                    check=True)
             if len(output.stderr) != 0:
                 err = UserWarning(name + ": " + output.stderr.decode())
                 LOGGER.error("%s.%s: %s", self.__class__.__name__,

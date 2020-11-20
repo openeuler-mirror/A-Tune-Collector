@@ -79,11 +79,12 @@ class IrqAffinity(Configurator):
                          inspect.stack()[0][3], str(err))
 
         mask = value.replace(",", "")
-        with open("{opt}/{id}/smp_affinity".format(opt=self._option, id=irq_id), "w") as file:
+        with open("{opt}/{id}/smp_affinity".format(opt=self._option, id=irq_id), "w") as file,
+            open("/dev/null", "w") as no_print:
             ret = subprocess.call(["echo", mask],
                                   shell=False,
                                   stdout=file,
-                                  stderr=subprocess.DEVNULL)
+                                  stderr=no_print)
         if ret != 0:
             err = SetConfigError("Fail to set irq {} affinity".format(key))
             LOGGER.error("%s.%s: %s", self.__class__.__name__,

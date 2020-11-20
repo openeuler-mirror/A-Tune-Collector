@@ -75,13 +75,14 @@ class PerfTop(Monitor):
         data_path = os.path.dirname(data_file.strip())
         if not os.path.exists(data_path):
             os.makedirs(data_path, 0o750)
-        subprocess.check_output(
-            "perf record -o {data} {opt}".format(
-                opt=self._option.format(
-                    event=self.__event,
-                    int=self.__interval),
-                data=data_file).split(),
-            stderr=subprocess.DEVNULL)
+        with open("/dev/null", "w") as no_print:
+            subprocess.check_output(
+                "perf record -o {data} {opt}".format(
+                    opt=self._option.format(
+                        event=self.__event,
+                        int=self.__interval),
+                    data=data_file).split(),
+                stderr=no_print)
         output = subprocess.check_output("perf report --stdio -i {data}".format(
             data=data_file).split(), stderr=subprocess.STDOUT)
         return output.decode()
@@ -135,7 +136,7 @@ class PerfTop(Monitor):
 
         pattern = re.compile(
             r"^\ {2,}(\d.*?)%\ {2,}(\w.*?)\ {1,}(.*?)\ {2,}\[[.|k]\]\ (\w.*)",
-            re.ASCII | re.MULTILINE)
+            re.UNICODE | re.MULTILINE)
         search_obj = pattern.findall(info)
         if len(search_obj) == 0:
             err = LookupError("Fail to find data")

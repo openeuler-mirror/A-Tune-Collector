@@ -13,7 +13,7 @@ class InstallScripts(install):
     """
 
     def run(self):
-        super().run()
+        install.run(self)
 
 
 s = setup(name='atune_collector',

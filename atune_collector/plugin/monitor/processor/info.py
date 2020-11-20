@@ -44,16 +44,13 @@ class CpuInfo(Monitor):
         :param fmt:  converted format
         :returns output:  converted result
         """
-        if fmt == "xml":
-            o_xml = subprocess.check_output(
-                "{cmd} -xml {opt}".format(
-                    cmd=self.__cmd,
-                    opt=self._option).split(),
-                stderr=subprocess.DEVNULL)
-            return o_xml.decode()
-        if fmt == "json":
-            o_json = subprocess.check_output("{cmd} -json {opt}".format(
-                cmd=self.__cmd, opt=self._option).split(),
-                                             stderr=subprocess.DEVNULL)
-            return o_json.decode()
+        if fmt in ("xml", "json"):
+            with open("/dev/null", "w") as no_print:
+                o_fmt = subprocess.check_output(
+                    "{cmd} -{fm} {opt}".format(
+                        cmd=self.__cmd,
+                        fm=fmt,
+                        opt=self._option).split(),
+                    stderr=no_print)
+                return o_fmt.decode()
         return Monitor.format(self, info, fmt)

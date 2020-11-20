@@ -54,7 +54,7 @@ class TaskAffinity(Configurator):
         search_obj = re.search(
             pattern,
             output.decode(),
-            re.ASCII | re.MULTILINE)
+            re.UNICODE | re.MULTILINE)
         if search_obj is None:
             err = GetConfigError("Fail to find {} affinity".format(key))
             LOGGER.error("%s.%s: %s", self.__class__.__name__,
@@ -71,13 +71,15 @@ class TaskAffinity(Configurator):
             raise err
 
         mask = value.replace(",", "")
-        return subprocess.call(
-            "{opt} {mask} {pid}".format(
-                opt=self._option,
-                mask=mask,
-                pid=task_id).split(),
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL)
+        with open("/dev/null", "w") as no_print:
+            callret = subprocess.call(
+                "{opt} {mask} {pid}".format(
+                    opt=self._option,
+                    mask=mask,
+                    pid=task_id).split(),
+                stdout=no_print,
+                stderr=no_print)
+        return callret
 
     @staticmethod
     def check(config1, config2):
