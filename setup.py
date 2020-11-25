@@ -3,6 +3,7 @@ import shutil
 
 from setuptools import setup, find_packages
 from setuptools.command.install import install
+from setuptools.command.test import test
 
 version = '0.1'
 
@@ -14,6 +15,15 @@ class InstallScripts(install):
 
     def run(self):
         install.run(self)
+
+
+class TestCommand(test):
+    """
+    test cases
+    """
+
+    def run_tests(self):
+        os.system("py.test-%s %s" % (3, "tests"))
 
 
 s = setup(name='atune_collector',
@@ -31,6 +41,7 @@ s = setup(name='atune_collector',
           install_requires=['pandas', 'dict2xml'],
           cmdclass={
               'install': InstallScripts,
+              'test': TestCommand,
           },
           )
 if 'install' in s.command_obj:
