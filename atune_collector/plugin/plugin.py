@@ -62,9 +62,9 @@ class MPI:
         all_modules = []
         all_purposes = []
         for sub_class in Monitor.__subclasses__():
-            all_mpis.append((sub_class.module(sub_class), sub_class.purpose(sub_class)))
-            all_modules.append(sub_class.module(sub_class))
-            all_purposes.append(sub_class.purpose(sub_class))
+            all_mpis.append((sub_class.module(), sub_class.purpose()))
+            all_modules.append(sub_class.module())
+            all_purposes.append(sub_class.purpose())
         self.get_monitors.__func__.__doc__ = self.get_monitors.__func__.__doc__ % (
             set(all_modules), set(all_purposes))
         self.get_monitor.__func__.__doc__ = self.get_monitor.__func__.__doc__ % (
@@ -182,9 +182,9 @@ class CPI:
         all_modules = []
         all_submods = []
         for sub_class in Configurator.__subclasses__():
-            all_cpis.append((sub_class.module(sub_class), sub_class.submod(sub_class)))
-            all_modules.append(sub_class.module(sub_class))
-            all_submods.append(sub_class.submod(sub_class))
+            all_cpis.append((sub_class.module(), sub_class.submod()))
+            all_modules.append(sub_class.module())
+            all_submods.append(sub_class.submod())
         self.get_configurators.__func__.__doc__ = self.get_configurators.__func__.__doc__ % (
             set(all_modules), set(all_submods))
         self.get_configurator.__func__.__doc__ = self.get_configurator.__func__.__doc__ % (
@@ -202,9 +202,9 @@ class CPI:
         """
         cpis = []
         for sub_class in Configurator.__subclasses__():
-            if (module is not None) and (sub_class.module(sub_class) != module):
+            if (module is not None) and (sub_class.module() != module):
                 continue
-            if (submod is not None) and (sub_class.submod(sub_class) != submod):
+            if (submod is not None) and (sub_class.submod() != submod):
                 continue
             c_cpi = sub_class()
             cpis.append(c_cpi)
