@@ -98,6 +98,8 @@ class NetEStat(Monitor):
                 keys.append(keyword[val])
                 continue
 
+        all_nic = nic.split(',')
+        nic = '|'.join(all_nic)
         pattern = re.compile(
             r"^(\d.*?)\ {1,}(" +
             nic +
@@ -106,23 +108,24 @@ class NetEStat(Monitor):
             r"\ {2,}(\d*\.?\d*)",
             re.UNICODE | re.MULTILINE)
         search_obj = pattern.findall(info)
-        if len(search_obj) == 0:
+        if len(search_obj) < len(all_nic):
             err = LookupError("Fail to find data for {}".format(nic))
             LOGGER.error("%s.%s: %s", self.__class__.__name__,
                          inspect.stack()[0][3], str(err))
             raise err
-
+        all_data = {line[1]: line for _, line in enumerate(search_obj)}
         for i in keys:
-            if type(i).__name__ == 'int':
-                ret = ret + " " + search_obj[-1][i]
-            elif i == "errs":
-                errs = float(search_obj[-1][keyword["rxerrs"]]) + \
-                       float(search_obj[-1][keyword["txerrs"]])
-                ret = ret + " " + str(errs)
-            elif i == "util":
-                util = float(search_obj[-1][keyword["rxdrops"]]) + \
-                       float(search_obj[-1][keyword["txdrops"]]) + \
-                       float(search_obj[-1][keyword["rxfifos"]]) + \
-                       float(search_obj[-1][keyword["txfifos"]])
-                ret = ret + " " + str(util)
+            for device in all_nic:
+                if type(i).__name__ == 'int':
+                    ret = ret + " " + all_data[device][i]
+                elif i == "errs":
+                    errs = float(all_data[device][keyword["rxerrs"]]) + \
+                           float(all_data[device][keyword["txerrs"]])
+                    ret = ret + " " + str(errs)
+                elif i == "util":
+                    util = float(all_data[device][keyword["rxdrops"]]) + \
+                           float(all_data[device][keyword["txdrops"]]) + \
+                           float(all_data[device][keyword["rxfifos"]]) + \
+                           float(all_data[device][keyword["txfifos"]])
+                    ret = ret + " " + str(util)
         return ret

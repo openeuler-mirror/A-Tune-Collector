@@ -83,7 +83,6 @@ class NetStat(Monitor):
 
         keys = []
         nic = "e.*?"
-        ret = ""
 
         opts, _ = getopt.getopt(para.split(), None, ['nic=', 'fields=', 'device='])
         for opt, val in opts:
@@ -94,6 +93,8 @@ class NetStat(Monitor):
                 keys.append(keyword[val])
                 continue
 
+        all_nic = nic.split(',')
+        nic = '|'.join(all_nic)
         pattern = re.compile(
             r"^(\d.*?)\ {1,}(" +
             nic +
@@ -101,12 +102,15 @@ class NetStat(Monitor):
             r"\ {1,}(\d*\.?\d*)\ {1,}(\d*\.?\d*)\ {1,}(\d*\.?\d*)\ {2,}(\d*\.?\d*)",
             re.UNICODE | re.MULTILINE)
         search_obj = pattern.findall(info)
-        if len(search_obj) == 0:
+        if len(search_obj) < len(all_nic):
             err = LookupError("Fail to find data for {}".format(nic))
             LOGGER.error("%s.%s: %s", self.__class__.__name__,
                          inspect.stack()[0][3], str(err))
             raise err
 
+        all_data = {line[1]: line for _, line in enumerate(search_obj)}
+        ret = ""
         for i in keys:
-            ret = ret + " " + search_obj[-1][i]
+            for device in all_nic:
+                ret = ret + " " + all_data[device][i]
         return ret
