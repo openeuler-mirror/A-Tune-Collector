@@ -14,7 +14,26 @@
 """
 Init file.
 """
-
+import subprocess
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(__file__))
+
+if "check_output" not in dir(subprocess):
+    def check_output(*popenargs, **kwargs):
+        """subprocess check_output definition"""
+        if 'stdout' in kwargs:
+            raise ValueError('stdout argument not allowed, it will be overridden.')
+        process = subprocess.Popen(stdout=subprocess.PIPE, shell=False, *popenargs, **kwargs)
+        output, unused_err = process.communicate()
+        retcode = process.poll()
+        if retcode:
+            cmd = kwargs.get("args")
+            if cmd is None:
+                cmd = popenargs[0]
+            raise subprocess.CalledProcessError(retcode, cmd, output=output)
+        return output
+
+
+    subprocess.check_output = check_output
