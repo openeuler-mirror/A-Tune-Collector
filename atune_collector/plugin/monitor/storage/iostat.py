@@ -94,9 +94,7 @@ class IoStat(Monitor):
 
         keys = []
         dev = "sd.*?"
-        ret = ""
         resplitobj = re.compile(r'\s*\n')
-        device_data = {}
 
         opts, _ = getopt.getopt(para.split(), None, ['nic=', 'fields=', 'device='])
         for opt, val in opts:
@@ -107,22 +105,31 @@ class IoStat(Monitor):
                 keys.append(val)
                 continue
 
+        all_dev = dev.split(',')
         rows_contents = resplitobj.split(info)
-        dev = "Device|" + dev
+        dev = "Device|" + '|'.join(all_dev)
         search_obj = []
         pattern = re.compile("^(" + dev + r").+", re.UNICODE)
         for row in rows_contents:
             if pattern.match(row):
-                search_obj.append([data for data in row.split()])
+                search_obj.append(row.split())
 
-        if len(search_obj) < 3:
+        if len(search_obj) < 2 * (1 + len(all_dev)):
             err = LookupError("Fail to find data for {}".format(dev))
             LOGGER.error("%s.%s: %s", self.__class__.__name__,
                          inspect.stack()[0][3], str(err))
             raise err
 
-        for i, _ in enumerate(search_obj[0]):
-            device_data[re.sub("/|%", "", search_obj[0][i])] = search_obj[-1][i]
+        all_data = {}
+        for _, line in enumerate(search_obj):
+            if line[0] == 'Device':
+                continue
+            device_data = {}
+            for i, _ in enumerate(search_obj[0]):
+                device_data[re.sub("/|%", "", search_obj[0][i])] = line[i]
+            all_data[line[0]] = device_data
+        ret = ""
         for i in keys:
-            ret = ret + " " + device_data[i]
+            for device in all_dev:
+                ret = ret + " " + all_data[device][i]
         return ret

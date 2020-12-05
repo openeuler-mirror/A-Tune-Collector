@@ -28,15 +28,27 @@ class Collector:
     def __init__(self, data):
         self.data = data
         self.field_name = []
+        self.support_multi_block = ['storage']
+        self.support_multi_nic = ['network', 'network-err']
 
     def parse_json(self):
         """parse json data"""
         monitors = []
         for item in self.data["collection_items"]:
-            parameters = []
-            parameters.append("--interval=%s;" % self.data["interval"])
+            parameters = ["--interval=%s;" % self.data["interval"]]
             for metric in item["metrics"]:
-                self.field_name.append("%s.%s.%s" % (item["module"], item["purpose"], metric))
+                nics = self.data["network"].split(',')
+                blocks = self.data["block"].split(',')
+                if item["name"] in self.support_multi_nic and len(nics) > 1:
+                    for net in nics:
+                        self.field_name.append(
+                            "%s.%s.%s.%s" % (item["module"], item["purpose"], metric, net))
+                elif item["name"] in self.support_multi_block and len(blocks) > 1:
+                    for block in blocks:
+                        self.field_name.append(
+                            "%s.%s.%s.%s" % (item["module"], item["purpose"], metric, block))
+                else:
+                    self.field_name.append("%s.%s.%s" % (item["module"], item["purpose"], metric))
                 parameters.append("--fields=%s" % metric)
             if "threshold" in item:
                 parameters.append("--threshold=%s" % item["threshold"])
@@ -67,10 +79,7 @@ class Collector:
         print(" ".join(self.field_name))
         for _ in range(collect_num):
             raw_data = MPI.get_monitors_data(monitors)
-            float_data = list()
-            for num in raw_data:
-                float_data.append(float(num))
-
+            float_data = [float(num) for num in raw_data]
             str_data = [str(round(value, 3)) for value in float_data]
             print(" ".join(str_data))
             field_data.append(float_data)
