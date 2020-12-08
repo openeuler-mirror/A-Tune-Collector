@@ -38,7 +38,7 @@ s = setup(name='atune_collector',
                                                 'atune_collector/plugin/configurator/bootloader/grub2.json'])],
           include_package_data=True,
           zip_safe=False,
-          install_requires=['pandas', 'dict2xml'],
+          install_requires=['dict2xml'],
           cmdclass={
               'install': InstallScripts,
               'test': TestCommand,
