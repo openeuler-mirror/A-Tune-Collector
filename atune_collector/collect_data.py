@@ -64,9 +64,11 @@ class Collector:
             os.makedirs(path, 0o750)
         file_name = "{}-{}.csv".format(self.data.get("workload_type", "default"),
                                        int(round(time.time() * 1000)))
-        import pandas as pd
-        writer = pd.DataFrame(columns=self.field_name, data=field_data)
-        writer.to_csv(os.path.join(path, file_name), encoding='utf-8', index=False)
+        import csv
+        with open(os.path.join(path, file_name), "w") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(self.field_name)
+            writer.writerows(field_data)
         print("finish to collect data, csv path is %s" % os.path.join(path, file_name))
 
     def collect_data(self):
