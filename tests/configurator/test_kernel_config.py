@@ -20,13 +20,13 @@ from atune_collector.plugin.configurator.kernel_config.kconfig import KernelConf
 class TestKernelConfig:
     """ test kernel config"""
     user = "UT"
-    config_key = "CONFIG_EULEROS_DETAILED_RAS_INFO"
+    config_key = "CONFIG_KDB_KEYBOARD"
 
     def test_get_kernel_config_no_exist(self):
         """test get kernel config with no exist"""
         try:
             kernel_config = KernelConfig(self.user)
-            value = kernel_config.get("CONFIG_EULEROS_TEST_KERNEL_CONFIG")
+            value = kernel_config.get("CONFIG_TEST_KERNEL_CONFIG")
             assert value is None
         except (Warning, FileNotFoundError, LookupError):
             assert True
