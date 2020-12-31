@@ -65,6 +65,18 @@
       ]
     },
     {
+      "name": "meminfo",
+      "module": "MEM",
+      "purpose": "MEMINFO",
+      "metrics": [
+        "MemTotal",
+        "MemFree",
+        "MemAvailable",
+        "SwapTotal",
+        "Dirty"
+      ]
+    },
+    {
       "name": "mem.band",
       "module": "MEM",
       "purpose": "BANDWIDTH",

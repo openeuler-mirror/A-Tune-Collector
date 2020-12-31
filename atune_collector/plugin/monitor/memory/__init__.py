@@ -15,6 +15,6 @@
 Init file.
 """
 
-__all__ = ["numainfo", "topo", "bandwidth", "vmstat", "utilstat"]
+__all__ = ["numainfo", "topo", "bandwidth", "vmstat", "utilstat", "meminfo"]
 
 from . import *

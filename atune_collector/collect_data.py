@@ -67,6 +67,7 @@ class Collector:
         import csv
         with open(os.path.join(path, file_name), "w") as csvfile:
             writer = csv.writer(csvfile)
+            self.field_name.insert(0, "TimeStamp")
             writer.writerow(self.field_name)
             writer.writerows(field_data)
         print("finish to collect data, csv path is %s" % os.path.join(path, file_name))
@@ -84,6 +85,7 @@ class Collector:
             float_data = [float(num) for num in raw_data]
             str_data = [str(round(value, 3)) for value in float_data]
             print(" ".join(str_data))
+            float_data.insert(0, time.strftime("%H:%M:%S"))
             field_data.append(float_data)
         return field_data
 
