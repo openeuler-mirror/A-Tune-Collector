@@ -42,11 +42,11 @@ class Collector:
                 if item["name"] in self.support_multi_nic and len(nics) > 1:
                     for net in nics:
                         self.field_name.append(
-                            "%s.%s.%s.%s" % (item["module"], item["purpose"], metric, net))
+                            "%s.%s.%s#%s" % (item["module"], item["purpose"], metric, net))
                 elif item["name"] in self.support_multi_block and len(blocks) > 1:
                     for block in blocks:
                         self.field_name.append(
-                            "%s.%s.%s.%s" % (item["module"], item["purpose"], metric, block))
+                            "%s.%s.%s#%s" % (item["module"], item["purpose"], metric, block))
                 else:
                     self.field_name.append("%s.%s.%s" % (item["module"], item["purpose"], metric))
                 parameters.append("--fields=%s" % metric)
