@@ -28,12 +28,13 @@ class IoStat(Monitor):
     """To collect the storage stat info"""
     _module = "STORAGE"
     _purpose = "STAT"
-    _option = "-xmt {int} 2"
+    _option = "-xmt {dev} {int} 2"
 
     def __init__(self, user=None):
         Monitor.__init__(self, user)
         self.__cmd = "iostat"
         self.__interval = 1
+        self.__device = ""
         self.format.__func__.__doc__ = Monitor.format.__doc__ % ("json")
         self.decode.__func__.__doc__ = Monitor.decode.__doc__ % (
             "--device=x, --fields=dev/rs/ws/rMBs/wMBs/"
@@ -59,13 +60,15 @@ class IoStat(Monitor):
                                      inspect.stack()[0][3], str(err))
                         raise err
                     continue
-
+        if self.__device == "":
+            return None
         output = subprocess.check_output(
             "{cmd} {opt}".format(
                 cmd=self.__cmd,
                 opt=self._option.format(
-                    int=self.__interval)).split())
+                    dev=self.__device, int=self.__interval)).split())
         return output.decode()
+        
 
     def format(self, info, fmt):
         """
@@ -105,9 +108,12 @@ class IoStat(Monitor):
                 keys.append(val)
                 continue
 
+        if info is None:
+            self.__device = dev.replace(',', ' ')
+            info = self._get()
         all_dev = dev.split(',')
-        rows_contents = resplitobj.split(info)
         dev = "Device|" + '|'.join(all_dev)
+        rows_contents = resplitobj.split(info)
         search_obj = []
         pattern = re.compile("^(" + dev + r").+", re.UNICODE)
         for row in rows_contents:
