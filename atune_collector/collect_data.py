@@ -78,10 +78,11 @@ class Collector:
         if int(collect_num) < 1:
             os.abort("sample_num must be greater than 0")
         field_data = []
+        mpi = MPI()
         monitors = self.parse_json()
         print(" ".join(self.field_name))
         for _ in range(collect_num):
-            raw_data = MPI.get_monitors_data(monitors)
+            raw_data = mpi.get_monitors_data(monitors)
             float_data = [float(num) for num in raw_data]
             str_data = [str(round(value, 3)) for value in float_data]
             print(" ".join(str_data))

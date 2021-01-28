@@ -52,28 +52,26 @@ class MPI:
 
     def __init__(self):
         """
-        Initialize.
+        Initialize the monitor plugin class,
+        including creating monitor instance.
 
         :param: None
         :returns: None
         :raises: None
         """
-        all_mpis = []
+        self._all_mpi = []
         all_modules = []
         all_purposes = []
         for sub_class in Monitor.__subclasses__():
-            all_mpis.append((sub_class.module(), sub_class.purpose()))
+            self._all_mpi.append(sub_class())
             all_modules.append(sub_class.module())
             all_purposes.append(sub_class.purpose())
         self.get_monitors.__func__.__doc__ = self.get_monitors.__func__.__doc__ % (
             set(all_modules), set(all_purposes))
-        self.get_monitor.__func__.__doc__ = self.get_monitor.__func__.__doc__ % (
-            all_mpis)
 
-    @classmethod
-    def get_monitors(cls, module=None, purpose=None):
+    def get_monitors(self, module=None, purpose=None):
         """
-        Get monitors of 'module' for 'purpose'.
+        Get monitor list of 'module' for 'purpose'.
 
         :param module(optional): %s
         :param purpose(optional): %s
@@ -81,25 +79,23 @@ class MPI:
         :raises: None
         """
         mpis = []
-        for sub_class in Monitor.__subclasses__():
-            if (module is not None) and (sub_class.module() != module):
+        for subclass_ins in self._all_mpi:
+            if (module is not None) and (subclass_ins.module() != module):
                 continue
-            if (purpose is not None) and (sub_class.purpose() != purpose):
+            if (purpose is not None) and (subclass_ins.purpose() != purpose):
                 continue
-            m_class = sub_class()
-            mpis.append(m_class)
+            mpis.append(subclass_ins)
         return mpis
 
-    @classmethod
-    def get_monitor(cls, module, purpose):
+    def get_monitor(self, module, purpose):
         """
-        Get monitor of 'module' for 'purpose'.
+        Get monitor instance of 'module' for 'purpose'.
 
         :param module & purpose: %s
         :returns mpi: Success, the found monitor
         :raises LookupError: Fail, find monitor error
         """
-        mpis = MPI.get_monitors(module, purpose)
+        mpis = self.get_monitors(module, purpose)
         if len(mpis) != 1:
             err = LookupError("Find {} {}-{} monitors".format(
                 len(mpis), module, purpose))
@@ -107,8 +103,7 @@ class MPI:
             raise err
         return mpis[0]
 
-    @classmethod
-    def get_monitor_pooled(cls, module, purpose, pool):
+    def get_monitor_pooled(self, module, purpose, pool):
         """
         Get monitor of 'module' for 'purpose' in pool.
 
@@ -118,12 +113,12 @@ class MPI:
         :raises LookupError: Fail, find monitor error
         """
         mpis = []
-        for sub_class in pool:
-            if (module is not None) and (sub_class.module() != module):
+        for subclass_ins in pool:
+            if (module is not None) and (subclass_ins.module() != module):
                 continue
-            if (purpose is not None) and (sub_class.purpose() != purpose):
+            if (purpose is not None) and (subclass_ins.purpose() != purpose):
                 continue
-            mpis.append(sub_class)
+            mpis.append(subclass_ins)
 
         if len(mpis) != 1:
             err = LookupError("Find {} {}-{} monitors in pool".format(
@@ -132,8 +127,7 @@ class MPI:
             raise err
         return mpis[0]
 
-    @classmethod
-    def get_monitors_data(cls, monitors, pool=None):
+    def get_monitors_data(self, monitors, pool=None):
         """
         Get given monitors report data in one.
 
@@ -147,9 +141,9 @@ class MPI:
         mts = []
         for m_mpi in monitors:
             if pool is None:
-                mon = MPI.get_monitor(m_mpi[0], m_mpi[1])
+                mon = self.get_monitor(m_mpi[0], m_mpi[1])
             else:
-                mon = MPI.get_monitor_pooled(m_mpi[0], m_mpi[1], pool)
+                mon = self.get_monitor_pooled(m_mpi[0], m_mpi[1], pool)
             m_thread = ThreadedCall(mon.report, ("data", None, m_mpi[2]))
             mts.append(m_thread)
             m_thread.start()
@@ -172,28 +166,26 @@ class CPI:
 
     def __init__(self):
         """
-        Initialize.
+        Initialize the configurator plugin class,
+        including creating configurator instance.
 
         :param: None
         :returns: None
         :raises: None
         """
-        all_cpis = []
+        self._all_cpi = []
         all_modules = []
         all_submods = []
         for sub_class in Configurator.__subclasses__():
-            all_cpis.append((sub_class.module(), sub_class.submod()))
+            self._all_cpi.append(sub_class())
             all_modules.append(sub_class.module())
             all_submods.append(sub_class.submod())
         self.get_configurators.__func__.__doc__ = self.get_configurators.__func__.__doc__ % (
             set(all_modules), set(all_submods))
-        self.get_configurator.__func__.__doc__ = self.get_configurator.__func__.__doc__ % (
-            all_cpis)
 
-    @classmethod
-    def get_configurators(cls, module=None, submod=None):
+    def get_configurators(self, module=None, submod=None):
         """
-        Get configurators of 'module'.'submod'.
+        Get configurator list of 'module'.'submod'.
 
         :param module(optional): %s
         :param submod(optional): %s
@@ -201,17 +193,15 @@ class CPI:
         :raises: None
         """
         cpis = []
-        for sub_class in Configurator.__subclasses__():
-            if (module is not None) and (sub_class.module() != module):
+        for subclass_ins in self._all_cpi:
+            if (module is not None) and (subclass_ins.module() != module):
                 continue
-            if (submod is not None) and (sub_class.submod() != submod):
+            if (submod is not None) and (subclass_ins.submod() != submod):
                 continue
-            c_cpi = sub_class()
-            cpis.append(c_cpi)
+            cpis.append(subclass_ins)
         return cpis
 
-    @classmethod
-    def get_configurator(cls, module, submod):
+    def get_configurator(self, module, submod):
         """
         Get configurator of 'module'.'submod'.
 
@@ -219,7 +209,7 @@ class CPI:
         :returns cpi: Success, the found configurator
         :raises LookupError: Fail, find configurator error
         """
-        cpis = CPI.get_configurators(module, submod)
+        cpis = self.get_configurators(module, submod)
         if len(cpis) != 1:
             err = LookupError("Find {} {}-{} configurators".format(
                 len(cpis), module, submod))
