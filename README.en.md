@@ -9,7 +9,7 @@ The A-Tune-Collector is used to collect various system resources and can also be
 If the collector is used for the A-Tune project, run the following command to install the collector.
 
 ```
-pytho3 setup.py install
+python3 setup.py install
 ```
 
 #### Instructions

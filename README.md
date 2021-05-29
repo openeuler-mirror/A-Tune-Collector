@@ -10,7 +10,7 @@ A-Tune-Collector用于各类系统资源的数据采集，也可以作为A-Tune�
 若作为采集器给A-Tune项目使用，需要执行如下命令进行安装
 
 ```
-pytho3 setup.py install
+python3 setup.py install
 ```
 
 #### 使用说明
