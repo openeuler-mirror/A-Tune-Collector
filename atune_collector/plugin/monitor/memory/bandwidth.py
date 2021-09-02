@@ -153,6 +153,8 @@ class MemBandwidth(Monitor):
         info = json.loads(info_json)
 
         dimms = [[0 for i in range(8)] for i in range(8)]
+        if "children" not in info["memorys"][0]:
+            return 0
         for dimm in info["memorys"][0]["children"]:
             if dimm.get("size") is None:
                 continue
