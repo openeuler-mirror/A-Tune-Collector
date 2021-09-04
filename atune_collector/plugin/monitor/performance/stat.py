@@ -131,26 +131,35 @@ class PerfStat(Monitor):
                 self.__stat[stat] = -1
 
         self.__stat["IPC"] = self.__stat["instructions"] / \
-                             self.__stat["cycles"]
+                             self.__stat["cycles"] if self.__stat["cycles"] > 0 else -1
         self.__stat["BRANCH-MISS-RATIO"] = self.__stat["branch-misses"] / \
-                                           self.__stat["branches"] * 100
+                                           self.__stat["branches"] * 100 \
+            if self.__stat["branches"] > 0 else -1
         self.__stat["CACHE-MISS-RATIO"] = self.__stat["cache-misses"] / \
-                                          self.__stat["cache-references"] * 100
+                                          self.__stat["cache-references"] * 100 \
+            if self.__stat["cache-references"] > 0 else -1
         self.__stat["DTLB-LOAD-MISS-RATIO"] = self.__stat["dTLB-load-misses"] / \
-                                              self.__stat["dTLB-loads"] * 100
+                                              self.__stat["dTLB-loads"] * 100 \
+            if self.__stat["dTLB-loads"] > 0 else -1
         self.__stat["ITLB-LOAD-MISS-RATIO"] = self.__stat["iTLB-load-misses"] / \
-                                              self.__stat["iTLB-loads"] * 100
+                                              self.__stat["iTLB-loads"] * 100 \
+            if self.__stat["iTLB-loads"] > 0 else -1
         self.__stat["MPKI"] = self.__stat["cache-misses"] / \
-                              self.__stat["instructions"] * 1000
+                              self.__stat["instructions"] * 1000 \
+            if self.__stat["instructions"] > 0 else -1
         self.__stat["SBPI"] = self.__stat["instructions"] / \
-                              self.__stat["instructions"]
+                              self.__stat["instructions"] \
+            if self.__stat["instructions"] > 0 else -1
         self.__stat["SBPC"] = self.__stat["instructions"] / \
-                              self.__stat["cycles"]
+                              self.__stat["cycles"] \
+            if self.__stat["cycles"] > 0 else -1
         self.__stat["MEMORY-BOUND"] = (self.__stat["memstall-load"] +
                                        self.__stat["memstall-store"]) / \
-                                      self.__stat["cycles"] * 100
+                                      self.__stat["cycles"] * 100 \
+            if self.__stat["cycles"] > 0 else -1
         self.__stat["STORE-BOUND"] = self.__stat["memstall-store"] / \
-                                     self.__stat["cycles"] * 100
+                                     self.__stat["cycles"] * 100 \
+            if self.__stat["cycles"] > 0 else -1
 
         for event in keys:
             ret = ret + " " + str(self.__stat[event])
