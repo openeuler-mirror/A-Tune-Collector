@@ -137,5 +137,6 @@ class IoStat(Monitor):
         ret = ""
         for i in keys:
             for device in all_dev:
-                ret = ret + " " + all_data[device][i]
+                item = all_data[device][i] if i in all_data[device] else '0.00'
+                ret = ret + " " + item
         return ret
