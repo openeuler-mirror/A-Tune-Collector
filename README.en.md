@@ -25,17 +25,17 @@ Parameter Description
 
 | Parameter    | Description                                                  |
 | ------------ | ------------------------------------------------------------ |
-| --config, -c | Specifies the json file to be parsed. The json file is used to configure the system resource information to be collected. If this parameter is not specified, the /etc/atune_collector/collect_data.json file is read by default. |
+| --config, -c | JSON file to be parsed. The JSON file is used to configure the system resource information to be collected. If this parameter is not specified, the **/etc/atune_collector/collect_data.json** file is read by default. |
 
 Example
 
-- Use the default collection resource configuration file.
+- Use the default resource collection configuration file.
 
   ```
   python3 collect_data.py
   ```
 
-- Use the specified collection resource configuration file.
+- Use the specified resource collection configuration file.
 
   ```
   python3 collect_data.py -c collect_data.json
@@ -43,21 +43,21 @@ Example
 
 Configuration Description
 
-Table 1 The file of collect_data.json
+Table 1 **collect_data.json** file
 
-| Name             | Description                                                  | Type             | Value Range |
+| Parameter             | Description                                                  | Type             | Value Range |
 | ---------------- | ------------------------------------------------------------ | ---------------- | ----------- |
-| network          | Specifies the NIC to be collected.                           | Character string | -           |
-| block            | Specifies the disk to be collected.                          | Character string | -           |
-| sample_num       | Specifies the sample num to be collected.                    | Integer          | >0          |
-| interval         | Interval for collecting data, in seconds.                    | Integer          | >0          |
-| output_dir       | File path for storing collected data.                        | Character string | -           |
-| workload_type    | Application load type of the collection environment. The default value is default. | Character string | -           |
+| network          | NIC to be collected.                           | Character string | -           |
+| block            | Disk to be collected.                          | Character string | -           |
+| sample_num       | Sample number to be collected.                    | Integer          | > 0          |
+| interval         | Interval for collecting data, in seconds.                    | Integer          | > 0          |
+| output_dir       | Path for storing collected data.                        | Character string | -           |
+| workload_type    | Application load type of the collection environment. The default value is **default**. | Character string | -           |
 | collection_items | Table 2 lists the system parameters to be collected.         | List             | -           |
 
-Table 2 Description of collection_items configuration items
+Table 2 Description of the **collection_items** configuration
 
-| Name      | Description                                                  | Type             | Value Range |
+| Parameter      | Description                                                  | Type             | Value Range |
 | --------- | ------------------------------------------------------------ | ---------------- | ----------- |
 | name      | Name of the item to be collected.                            | Character string | -           |
 | module    | Category of the item to be collected. The category must match the definition of the corresponding collection module. | Character string | -           |
@@ -67,7 +67,7 @@ Table 2 Description of collection_items configuration items
 
 Example
 
-The following is an example of the collect_data.json file.
+The following is an example of the **collect_data.json** file.
 
 ```
 {
@@ -205,6 +205,6 @@ The following is an example of the collect_data.json file.
 }
 ```
 
-#### Relate Information
+#### Related Information
 
 A-Tune project：https://gitee.com/openeuler/A-Tune
