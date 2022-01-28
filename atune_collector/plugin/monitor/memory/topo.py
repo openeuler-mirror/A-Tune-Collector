@@ -95,6 +95,8 @@ class MemTopo(Monitor):
                     cmd=self.__cmd).split(), stderr=no_print)
             info = o_json.decode()
             json_content = json.loads(info)
+            if (isinstance(json_content, list)):
+                json_content = {'children': json_content}
 
             dict_datas = get_class_type(json_content, "memory", "System Memory")
             if fmt == "json":
