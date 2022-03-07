@@ -52,8 +52,10 @@ Table 1 **collect_data.json** file
 | sample_num       | Sample number to be collected.                    | Integer          | > 0          |
 | interval         | Interval for collecting data, in seconds.                    | Integer          | > 0          |
 | output_dir       | Path for storing collected data.                        | Character string | -           |
-| workload_type    | Application load type of the collection environment. The default value is **default**. | Character string | -           |
+| workload_type    | Application load type of the collection environment, used as output file name. The default value is **default**. | Character string | -           |
 | collection_items | Table 2 lists the system parameters to be collected.         | List             | -           |
+
+When data collecting is finished, the data will be saved as: `${output_dir}/${workload_type}-${finish_timestamp}.csv`
 
 Table 2 Description of the **collection_items** configuration
 
