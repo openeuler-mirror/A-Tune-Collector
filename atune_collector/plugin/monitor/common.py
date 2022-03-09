@@ -230,7 +230,7 @@ class Monitor(object):
 def walk_class_type(father, class_type, desc, datas):
     """get key field"""
     if "class" in father and father["class"] == class_type:
-        if "description" in father and (desc is None or father["description"] == desc):
+        if "description" in father and (desc is None or father["description"].lower() == desc.lower()):
             datas.append(father)
             return
     if "children" in father:
