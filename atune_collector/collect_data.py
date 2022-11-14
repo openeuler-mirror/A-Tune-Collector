@@ -18,6 +18,7 @@ import argparse
 import json
 import os
 import time
+import csv
 
 from plugin.plugin import MPI
 
@@ -30,65 +31,79 @@ class Collector:
         self.field_name = []
         self.support_multi_block = ['storage']
         self.support_multi_nic = ['network', 'network-err']
+        self.support_multi_app = ['process']
 
     def parse_json(self):
         """parse json data"""
         monitors = []
         for item in self.data["collection_items"]:
-            parameters = ["--interval=%s;" % self.data["interval"]]
-            for metric in item["metrics"]:
-                nics = self.data["network"].split(',')
-                blocks = self.data["block"].split(',')
-                if item["name"] in self.support_multi_nic and len(nics) > 1:
-                    for net in nics:
+            if item["name"] in self.support_multi_app and ('application' not in self.data or
+                                                                self.data["application"] == ""):
+                continue
+            if item["name"] in self.support_multi_app:
+                applications = self.data["application"].split(',')
+                parameters = ["--interval=%s --app=%s;" %(self.data["interval"], self.data["application"])]
+                for application in applications:    
+                    for metric in item["metrics"]:
                         self.field_name.append(
-                            "%s.%s.%s#%s" % (item["module"], item["purpose"], metric, net))
-                elif item["name"] in self.support_multi_block and len(blocks) > 1:
-                    for block in blocks:
-                        self.field_name.append(
-                            "%s.%s.%s#%s" % (item["module"], item["purpose"], metric, block))
-                else:
-                    self.field_name.append("%s.%s.%s" % (item["module"], item["purpose"], metric))
-                parameters.append("--fields=%s" % metric)
-            if "threshold" in item:
-                parameters.append("--threshold=%s" % item["threshold"])
+                            "%s.%s.%s#%s" % (item["module"], item["purpose"], metric, application))
+                        parameters.append("--fields=%s" % metric)
+            else:
+                parameters = ["--interval=%s;" % self.data["interval"]]
+                for metric in item["metrics"]:
+                    nics = self.data["network"].split(',')
+                    blocks = self.data["block"].split(',')
+                    
+                    if item["name"] in self.support_multi_nic and len(nics) > 1:
+                        for net in nics:
+                            self.field_name.append(
+                                "%s.%s.%s#%s" % (item["module"], item["purpose"], metric, net))
+                    elif item["name"] in self.support_multi_block and len(blocks) > 1:
+                        for block in blocks:
+                            self.field_name.append(
+                                "%s.%s.%s#%s" % (item["module"], item["purpose"], metric, block))
+                    else:
+                        self.field_name.append("%s.%s.%s" % (item["module"], item["purpose"], metric))
+                    parameters.append("--fields=%s" % metric)
+                if "threshold" in item:
+                    parameters.append("--threshold=%s" % item["threshold"])
+
             parameters.append("--nic=%s" % self.data["network"])
             parameters.append("--device=%s" % self.data["block"])
             monitors.append([item["module"], item["purpose"], " ".join(parameters)])
         return monitors
-
-    def save_csv(self, field_data):
-        """save data to csv file"""
-        path = self.data["output_dir"]
-        if not os.path.exists(path):
-            os.makedirs(path, 0o750)
-        file_name = "{}-{}.csv".format(self.data.get("workload_type", "default"),
-                                       int(round(time.time() * 1000)))
-        import csv
-        with open(os.path.join(path, file_name), "w") as csvfile:
-            writer = csv.writer(csvfile)
-            self.field_name.insert(0, "TimeStamp")
-            writer.writerow(self.field_name)
-            writer.writerows(field_data)
-        print("finish to collect data, csv path is %s" % os.path.join(path, file_name))
 
     def collect_data(self):
         """collect data"""
         collect_num = self.data["sample_num"]
         if int(collect_num) < 1:
             os.abort("sample_num must be greater than 0")
-        field_data = []
+
         mpi = MPI()
         monitors = self.parse_json()
+        path = self.data["output_dir"]
+        if not os.path.exists(path):
+            os.makedirs(path, 0o750)
+        file_name = "{}-{}.csv".format(self.data.get("workload_type", "default"),
+                                       int(round(time.time() * 1000)))
+                                       
+        print("start to collect data, csv path is %s" % os.path.join(path, file_name))
         print(" ".join(self.field_name))
-        for _ in range(collect_num):
-            raw_data = mpi.get_monitors_data(monitors)
-            float_data = [float(num) for num in raw_data]
-            str_data = [str(round(value, 3)) for value in float_data]
-            print(" ".join(str_data))
-            float_data.insert(0, time.strftime("%H:%M:%S"))
-            field_data.append(float_data)
-        return field_data
+        with open(os.path.join(path, file_name), "w") as csvfile:
+            writer = csv.writer(csvfile)
+            self.field_name.insert(0, "TimeStamp")
+            writer.writerow(self.field_name)
+            csvfile.flush()
+            for _ in range(collect_num):
+                raw_data = mpi.get_monitors_data(monitors)
+                float_data = [float(num) for num in raw_data]
+                str_data = [str(round(value, 3)) for value in float_data]
+                print(" ".join(str_data))
+                float_data.insert(0, time.strftime("%H:%M:%S"))
+                # field_data.append(float_data)
+                writer.writerow(float_data)
+                csvfile.flush()
+        print("finish to collect data, csv path is %s" % os.path.join(path, file_name))
 
 
 if __name__ == "__main__":
@@ -100,5 +115,7 @@ if __name__ == "__main__":
     with open(ARGS.config, 'r') as file:
         json_data = json.load(file)
     collector = Collector(json_data)
-    dataset = collector.collect_data()
-    collector.save_csv(dataset)
+    try:
+        collector.collect_data()
+    except KeyboardInterrupt:
+        print("user stop collect data")

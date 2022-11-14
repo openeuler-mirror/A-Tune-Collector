@@ -50,11 +50,13 @@ python3 collect_data.py [OPTIONS]
 | ---------------- | ------------------------------------- | ------------ | ------------ |
 | network          | 待采集的指定网卡                      | 字符串       | -            |
 | block            | 待采集的指定磁盘                      | 字符串       | -            |
+| application      | 需要采集的应用进程                     | 字符串       | -            |
 | sample_num       | 待采集的次数                          | 整型         | >0           |
 | interval         | 待采集的间隔时间，单位为秒            | 整型         | >0           |
 | output_dir       | 采集完后数据存储的文件路径            | 字符串       | -            |
 | workload_type    | 采集环境的应用负载类型，用作输出文件名，默认为default | 字符串       | -            |
 | collection_items | 需要采集的系统参数项，参见表2         | 列表         | -            |
+
 
 最终采集完后，数据将保存为: `${output_dir}/${workload_type}-${finish_timestamp}.csv`
 
@@ -76,6 +78,7 @@ collect_data.json文件配置示例：
 {
   "network": "eth0",
   "block": "sda",
+  "application": "mysqld",
   "sample_num": 20,
   "interval": 5,
   "output_dir": "/var/atuned/collect_data",
@@ -202,6 +205,19 @@ collect_data.json文件配置示例：
       "purpose": "FDUTIL",
       "metrics": [
         "fd-util"
+      ]
+    },
+    {
+      "name": "process",
+      "module": "PROCESS",
+      "purpose": "SCHED",
+      "metrics": [
+        "exec_start",
+        "vruntime",
+        "sum_exec_runtime",
+        "switches",
+        "voluntary_switches",
+        "involuntary_switches"
       ]
     }
   ]

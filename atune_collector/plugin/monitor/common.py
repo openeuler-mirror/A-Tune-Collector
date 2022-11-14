@@ -134,6 +134,7 @@ class Monitor(object):
                 "--interval=" to specify period of time
                 "--cpu=" to select which cpu
                 "--event=" to select which event
+                "--app" to select which applications
         :returns value: Success, collected info string
         :raises Exceptions: Fail, with info
         """

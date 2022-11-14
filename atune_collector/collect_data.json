@@ -1,6 +1,7 @@
 {
   "network": "eth0",
   "block": "sda",
+  "application": "firewalld,dockerd",
   "sample_num": 20,
   "interval": 5,
   "output_dir": "/var/atuned/collect_data",
@@ -139,6 +140,19 @@
       "purpose": "FDUTIL",
       "metrics": [
         "fd-util"
+      ]
+    },
+    {
+      "name": "process",
+      "module": "PROCESS",
+      "purpose": "SCHED",
+      "metrics": [
+        "exec_start",
+        "vruntime",
+        "sum_exec_runtime",
+        "switches",
+        "voluntary_switches",
+        "involuntary_switches"
       ]
     }
   ]
