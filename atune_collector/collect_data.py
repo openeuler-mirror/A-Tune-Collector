@@ -21,6 +21,7 @@ import time
 import csv
 
 from plugin.plugin import MPI
+from werkzeug.utils import secure_filename
 
 
 class Collector:
@@ -112,6 +113,7 @@ if __name__ == "__main__":
     ARG_PARSER.add_argument('-c', '--config', metavar='json',
                             default=default_json_path, help='input json path')
     ARGS = ARG_PARSER.parse_args()
+    filename=secure_filename(ARGS.config)
     with open(ARGS.config, 'r') as file:
         json_data = json.load(file)
     collector = Collector(json_data)
