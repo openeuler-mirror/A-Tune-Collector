@@ -158,12 +158,13 @@ class MemBandwidth(Monitor):
         for dimm in info["memorys"][0]["children"]:
             if dimm.get("size") is None:
                 continue
-            locator = memtopo.table_get_locator(dimm["slot"])
-            if locator is None:
-                continue
-            if dimms[locator[0]][locator[1]] == 0:
-                dimms[locator[0]][locator[1]] = dimm["width"] * \
-                                                memtopo.table_get_freq(dimm["description"]) / 8
+            if "slot" in dimm:
+                locator = memtopo.table_get_locator(dimm["slot"])
+                if locator is None:
+                    continue
+                if dimms[locator[0]][locator[1]] == 0:
+                    dimms[locator[0]][locator[1]] = dimm["width"] * \
+                                                    memtopo.table_get_freq(dimm["description"]) / 8
         ret = 0
         for channel in dimms[socket]:
             ret += channel
