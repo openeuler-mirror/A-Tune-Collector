@@ -42,18 +42,18 @@ class Nginx(Configurator):
             os.mkdir(self.__file_dir)
             os.chmod(self.__file_dir, 0o755)
         if not os.path.isfile(self.__file_path):
-            with open(self.__file_path, 'w'):
+            with open(self.__file_path, 'w', 0o644):
                 pass
             os.chmod(self.__file_path, 0o644)
         self._set_index()
 
     def _get_lines(self):
-        with open(self.__file_path, 'r') as f:
+        with open(self.__file_path, 'r', 0o444) as f:
             lines = f.readlines()
         return lines
 
     def _set_lines(self, lines):
-        with open(self.__file_path, 'w') as f:
+        with open(self.__file_path, 'w', 0o644) as f:
             f.writelines(lines)
 
     def _set_index(self):
@@ -208,4 +208,5 @@ def rewrite_value(value):
     if output.returncode != 0:
         raise SetConfigError("Failed to get cpu number")
     return output.stdout.decode().count("\n")
+
 

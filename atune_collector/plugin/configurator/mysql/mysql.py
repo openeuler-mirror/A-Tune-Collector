@@ -31,8 +31,10 @@ class Mysql(Configurator):
         self.__cmd = ""
         self.__file_path = "/etc/my.cnf"
         self.__mysqld_ind = -1
+
+    def _init_file(self):
         if not os.path.isfile(self.__file_path):
-            with open(self.__file_path, 'w'):
+            with open(self.__file_path, 'w', 0o644):
                 pass
             os.chmod(self.__file_path, 0o644)
         self.__check_mysqld()
@@ -61,7 +63,8 @@ class Mysql(Configurator):
         return False, ind
     
     def _set(self, key, value):
-        with open(self.__file_path, 'r') as f:
+        self._init_file()
+        with open(self.__file_path, 'r', 0o400) as f:
             lines = f.readlines()
 
         key_exist, ind = self.__check_file_exists(lines, key)
@@ -71,7 +74,7 @@ class Mysql(Configurator):
         else:
             lines[ind] = new_line
 
-        with open(self.__file_path, 'w') as f:
+        with open(self.__file_path, 'w', 0o644) as f:
             f.writelines(lines)
         return 0
 

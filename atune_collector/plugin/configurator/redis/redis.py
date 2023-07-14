@@ -34,15 +34,18 @@ class Redis(Configurator):
         self.__re = r"^#\?\s*{key}\s* "
         self.__file_dir = "/etc/redis/"
         self.__file_path = self.__file_dir + "redis.conf"
+
+    def _init_file(self):
         if not os.path.isdir(self.__file_dir):
             os.mkdir(self.__file_dir)
             os.chmod(self.__file_dir, 0o755)
         if not os.path.isfile(self.__file_path):
-            with open(self.__file_path, 'w', 0o200):
+            with open(self.__file_path, 'w', 0o600):
                 pass
             os.chmod(self.__file_path, 0o644)
 
     def _set(self, key, value):
+        self._init_file()
         re_cmd = self.__re.format(key=key)
         grep_cmd = [r"grep", re_cmd, self.__file_path]
         out, err = self.execute_cmd(grep_cmd)
@@ -51,7 +54,7 @@ class Redis(Configurator):
         num_lines = out.count("\n")
         new_line = self.__lines.format(key=key, value=value)
         if num_lines == 0:
-            with open(self.__file_path, 'a', 0o600) as f:
+            with open(self.__file_path, 'a', 0o644) as f:
                 f.write(new_line + '\n')
         elif num_lines == 1:
             sed_cmd = [r"sed", "-i", r"s/{}.*$/{}/g".format(re_cmd, new_line), self.__file_path]
