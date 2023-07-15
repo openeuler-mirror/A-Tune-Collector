@@ -17,4 +17,4 @@ Init file.
 
 __all__ = ["info", "netstat", "netestat", "topo"]
 
-from . import *
+from . import info, netstat, netestat, topo

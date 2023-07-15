@@ -17,4 +17,4 @@ Init file.
 
 __all__ = ["iostat", "topo"]
 
-from . import *
+from . import iostat, topo

@@ -17,4 +17,4 @@ Init file.
 
 __all__ = ["numainfo", "topo", "bandwidth", "vmstat", "utilstat", "meminfo"]
 
-from . import *
+from . import numainfo, topo, bandwidth, vmstat, utilstat, meminfo

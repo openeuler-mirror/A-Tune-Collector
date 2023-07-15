@@ -15,6 +15,15 @@
 Init file.
 """
 
+from .memory import *
+from .network import *
+from .performance import *
+from .process import *
+from .processor import *
+from .storage import *
+from .system import *
+from . import common
+
 __all__ = [
     "memory",
     "network",
@@ -24,5 +33,3 @@ __all__ = [
     "storage",
     "common",
     "system"]
-
-from . import *

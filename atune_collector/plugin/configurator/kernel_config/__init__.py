@@ -17,4 +17,4 @@ Init file.
 
 __all__ = ["kconfig"]
 
-from . import *
+from . import kconfig

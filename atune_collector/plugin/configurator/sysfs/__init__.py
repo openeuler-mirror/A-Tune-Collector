@@ -17,4 +17,4 @@ Init file.
 
 __all__ = ["sysfs"]
 
-from . import *
+from . import sysfs

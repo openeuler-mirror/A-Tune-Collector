@@ -17,5 +17,4 @@ Init file.
 
 __all__ = ["redis"]
 
-from . import *
-
+from . import redis

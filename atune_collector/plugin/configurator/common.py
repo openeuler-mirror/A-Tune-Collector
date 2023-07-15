@@ -20,7 +20,7 @@ import logging
 import json
 from functools import wraps
 
-from exceptions import SetConfigError
+from .exceptions import SetConfigError
 
 LOGGER = logging.getLogger(__name__)
 

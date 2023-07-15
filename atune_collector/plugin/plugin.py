@@ -19,9 +19,9 @@ import logging
 import threading
 import time
 
-from configurator.common import Configurator
+from .configurator.common import Configurator
 
-from monitor.common import Monitor
+from .monitor.common import Monitor
 
 LOGGER = logging.getLogger(__name__)
 

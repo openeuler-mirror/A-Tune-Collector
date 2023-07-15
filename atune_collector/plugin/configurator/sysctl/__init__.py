@@ -17,4 +17,4 @@ Init file.
 
 __all__ = ["sysctl"]
 
-from . import *
+from . import sysctl

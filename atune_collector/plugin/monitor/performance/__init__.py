@@ -17,4 +17,4 @@ Init file.
 
 __all__ = ["stat", "top"]
 
-from . import *
+from . import stat, top
