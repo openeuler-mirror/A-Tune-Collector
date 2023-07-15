@@ -17,5 +17,4 @@ Init file.
 
 __all__ = ["mysql"]
 
-from . import *
-
+from . import mysql

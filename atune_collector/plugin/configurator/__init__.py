@@ -17,24 +17,33 @@ Init file.
 import sys
 import os
 
-sys.path.append(os.path.dirname(__file__))
+from .affinity import *
+from .bios import *
+from .bootloader import *
+from .file_config import *
+from .kernel_config import *
+from .script import *
+from .sysctl import *
+from .sysfs import *
+from .systemctl import *
+from .ulimit import *
+from .mysql import *
+from .redis import *
+from .nginx import *
 
-__all__ = [
-    "exceptions",
-    "affinity",
-    "bios",
-    "bootloader",
-    "file_config",
-    "kernel_config",
-    "script",
-    "sysctl",
-    "sysfs",
-    "systemctl",
-    "ulimit",
-    "mysql",
-    "redis",
-    "nginx",
-    "common"]
-
-from . import *
+__all__ = ["exceptions",
+           "affinity",
+           "bios",
+           "bootloader",
+           "file_config",
+           "kernel_config",
+           "script",
+           "sysctl",
+           "sysfs",
+           "systemctl",
+           "ulimit",
+           "mysql",
+           "redis",
+           "nginx",
+           "common"]
 

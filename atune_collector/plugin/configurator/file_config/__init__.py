@@ -17,4 +17,4 @@ Init file.
 
 __all__ = ["fconfig"]
 
-from . import *
+from . import fconfig

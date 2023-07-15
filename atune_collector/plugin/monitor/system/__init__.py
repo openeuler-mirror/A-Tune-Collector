@@ -17,4 +17,4 @@ The import content of the package.
 
 __all__ = ["bios", "ldavg", "tasks", "filed", "interrupts"]
 
-from . import *
+from . import bios, ldavg, tasks, filed, interrupts

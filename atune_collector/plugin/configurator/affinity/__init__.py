@@ -19,6 +19,6 @@ import os
 
 __all__ = ["irq", "task", "processid"]
 
-from . import *
+from . import irq, task, processid
 
 sys.path.insert(0, os.path.dirname(__file__))

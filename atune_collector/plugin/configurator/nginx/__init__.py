@@ -17,5 +17,4 @@ Init file.
 
 __all__ = ["nginx"]
 
-from . import *
-
+from . import nginx

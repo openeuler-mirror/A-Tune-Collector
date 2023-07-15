@@ -17,4 +17,4 @@ Init file.
 
 __all__ = ["sched"]
 
-from . import *
+from . import sched

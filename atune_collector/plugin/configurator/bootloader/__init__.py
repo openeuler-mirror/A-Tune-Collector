@@ -20,6 +20,6 @@ import os
 
 __all__ = ["grub2", "cmdline"]
 
-from . import *
+from . import grub2, cmdline
 
 sys.path.insert(0, os.path.dirname(__file__))
