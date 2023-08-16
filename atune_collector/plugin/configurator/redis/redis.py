@@ -68,6 +68,9 @@ class Redis(Configurator):
     def _get(self, key, _):
         pass
 
+    def _backup(self, config, _):
+        return str(config)
+
     @staticmethod
     def check(config1, config2):
         return True
