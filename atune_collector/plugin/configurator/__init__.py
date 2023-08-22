@@ -22,6 +22,7 @@ from .bios import *
 from .bootloader import *
 from .file_config import *
 from .kernel_config import *
+from .network import *
 from .script import *
 from .sysctl import *
 from .sysfs import *
@@ -37,6 +38,7 @@ __all__ = ["exceptions",
            "bootloader",
            "file_config",
            "kernel_config",
+           "network",
            "script",
            "sysctl",
            "sysfs",
