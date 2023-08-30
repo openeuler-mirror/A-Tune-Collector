@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install
 from setuptools.command.test import test
 
-version = '0.1'
+version = '1.2.0'
 
 
 class InstallScripts(install):
