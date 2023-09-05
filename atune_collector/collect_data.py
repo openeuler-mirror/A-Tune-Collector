@@ -33,6 +33,8 @@ class Collector:
         self.support_multi_block = ['storage']
         self.support_multi_nic = ['network', 'network-err']
         self.support_multi_app = ['process']
+        self.monitors = self.parse_json()
+        self.mpi = MPI()
 
     def parse_json(self):
         """parse json data"""
@@ -76,35 +78,9 @@ class Collector:
 
     def collect_data(self):
         """collect data"""
-        collect_num = self.data["sample_num"]
-        if int(collect_num) < 1:
-            os.abort("sample_num must be greater than 0")
-
-        mpi = MPI()
-        monitors = self.parse_json()
-        path = self.data["output_dir"]
-        if not os.path.exists(path):
-            os.makedirs(path, 0o750)
-        file_name = "{}-{}.csv".format(self.data.get("workload_type", "default"),
-                                       int(round(time.time() * 1000)))
-                                       
-        print("start to collect data, csv path is %s" % os.path.join(path, file_name))
-        print(" ".join(self.field_name))
-        with open(os.path.join(path, file_name), "w") as csvfile:
-            writer = csv.writer(csvfile)
-            self.field_name.insert(0, "TimeStamp")
-            writer.writerow(self.field_name)
-            csvfile.flush()
-            for _ in range(collect_num):
-                raw_data = mpi.get_monitors_data(monitors)
-                float_data = [float(num) for num in raw_data]
-                str_data = [str(round(value, 3)) for value in float_data]
-                print(" ".join(str_data))
-                float_data.insert(0, time.strftime("%H:%M:%S"))
-                # field_data.append(float_data)
-                writer.writerow(float_data)
-                csvfile.flush()
-        print("finish to collect data, csv path is %s" % os.path.join(path, file_name))
+        raw_data = self.mpi.get_monitors_data(self.monitors)
+        float_data = [float(num) for num in raw_data]
+        return float_data
 
 
 if __name__ == "__main__":
@@ -118,6 +94,31 @@ if __name__ == "__main__":
         json_data = json.load(file)
     collector = Collector(json_data)
     try:
-        collector.collect_data()
+        collect_num = collector.data["sample_num"]
+        if int(collect_num) < 1:
+            os.abort("sample_num must be greater than 0")
+        file_name = "{}-{}.csv".format(collector.data.get("workload_type", "default"),
+                                       int(round(time.time() * 1000)))
+                                            
+        path = collector.data["output_dir"]
+        if not os.path.exists(path):
+            os.makedirs(path, 0o750)
+        print("csv path: %s" % os.path.join(path, file_name))
+        print("csv fields: %s" % " ".join(collector.field_name))
+        print("start to collect data...")
+        with open(os.path.join(path, file_name), "w") as csvfile:
+            writer = csv.writer(csvfile)
+            output_fields = ["TimeStamp"] + collector.field_name
+            writer.writerow(output_fields)
+            csvfile.flush()
+            for _ in range(collect_num):
+                data = collector.collect_data()
+                str_data = [str(round(value, 3)) for value in data]
+                str_data.insert(0, time.strftime("%H:%M:%S"))
+                writer.writerow(str_data)
+                csvfile.flush()
+                print(" ".join(str_data))
+        print("finish to collect data, csv path is %s" % os.path.join(path, file_name))
+
     except KeyboardInterrupt:
         print("user stop collect data")

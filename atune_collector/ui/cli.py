@@ -22,6 +22,13 @@ import csv
 import argparse
 import json
 import copy
+import threading
+import time
+
+from log import logger
+
+sys.path.append(os.path.dirname( __file__ ) + '/..')
+from collect_data import Collector
 
 
 KEY_RESET = ord('r')
@@ -80,7 +87,7 @@ class DisplayScreen:
         Display error message if current screen size is not fitted.
         """
         self.errstatus = False
-        if self.height < 50 or self.width < 200:
+        if self.height < 5 or self.width < 20:
             self.errstatus = True
             errmsg = "[ERROR] Screen size is not enough!"
             self.screen.addstr(self.height//2, abs(self.width-len(errmsg))//2, errmsg, curses.color_pair(COLOR_RED_BLACK) | curses.A_BOLD)
@@ -102,34 +109,61 @@ class DisplayScreen:
         self.win_notebar = curses.newwin(1, self.width, self.height-1, 0)
 
     @staticmethod
-    def draw_diagram(window, name_y:str, name_x:str,
-                     height=10, width=20, begin_y=1, begin_x=1, data:list=None):
+    def draw_diagram(window: curses.window, name_y:str, name_x:str,
+                     height=10, width=20, begin_y=1, begin_x=1, data:list=None, dmax=None, dmin=None):
         """
         Plot diagram in a height*width window(default 10*20).
+
+        :window: drawing window
+        :name_y: y axis label string
+        :name_x: x axis label string
+        :height:  
+        :width:  
+        :begin_y: left start point height
+        :begin_x: top start point width
+        :data: data points
         """
+        # need extra 2 y-lines and 6 x-lines for axis and label
         win_plot = window.derwin(height+2, width+6, begin_y, begin_x)
         win_plot.attrset(curses.A_BOLD)
+        # draw y axis line and label
         win_plot.addnstr(0, 0, name_y, 10)
         win_plot.vline(1, 0, curses.ACS_VLINE, height)
+        # draw x-y axis corner
         win_plot.addch(height+1, 0, curses.ACS_LLCORNER)
+        # draw x axis line and label
         win_plot.hline(height+1, 1, curses.ACS_HLINE, width)
         win_plot.addnstr(height+1, width+1, name_x, 5)
+        # draw data graph part
         win_data = win_plot.derwin(height, width, 1, 1)
         if data is None or len(data) == 0:
             msg = "NOT COLLECTED"
             win_data.addstr(height//2, (width-len(msg))//2, msg, curses.A_BOLD | curses.color_pair(COLOR_RED_BLACK))
         else:
             win_data.clear()
-            dmax = max(data) if max(data) != 0 else 1
-            dmin = min(data)
-            for xaxis in range(min(width, len(data))):
+            if dmin is None:
+                dmin = min(data)
+            if dmax is None:
+                dmax = max(data) if max(data) != dmin else 2 * dmin + 1
+            # update 
+            if len(name_y) + len(f"(max={round(dmax,1)},min={round(dmin,1)})") <= width + 6:
+                win_plot.addnstr(0, len(name_y), f"(max={round(dmax,1)},min={round(dmin,1)})", width+6)
+            elif len(name_y) + len(f"(max={round(dmax,1)}") <= width + 6:
+                win_plot.addnstr(0, len(name_y), f"(max={round(dmax,1)})", width+6)
+            # draw at most width points
+            n = min(width, len(data))
+            data = data[-n:]    # draw last N points
+            for xaxis in range(n):
+                # calculate point height
                 rdata = round((data[xaxis]-dmin)/(dmax-dmin)*height)
+                rdata = min(height, rdata)
                 if rdata > 0:
                     win_data.vline(height-rdata, xaxis, curses.ACS_CKBOARD, rdata)
+                    # win_data.vline(height-rdata, xaxis, curses.ACS_BOARD, rdata)
         win_plot.refresh()
 
     @staticmethod
-    def draw_box(window, title:str, attr:int=None):
+    def draw_box(window: curses.window, title:str, attr:int=None):
         """
         Draw window border with a bold-type title at top left corner.
         Default title color is YELLOW.
@@ -140,7 +174,7 @@ class DisplayScreen:
         window.addnstr(0, 4, " {} ".format(title), window.getmaxyx()[1]-5, attr)
 
     @staticmethod
-    def draw_progressbar(window, name:str, begin_y=1, begin_x=1,
+    def draw_progressbar(window: curses.window, name:str, begin_y=1, begin_x=1,
                          barlen=50, info:dict=None):
         """
         Draw progress bar in a window.
@@ -164,14 +198,14 @@ class DisplayScreen:
         for key, data in info.items():
             tlen = round(data / datasum * barlen)
             cnum = next(cgroup)
-            cstr = "{}:{} ".format(key, data)
+            cstr = "{}:{}  ".format(key, data)
             win_progsbar.addstr(0, xptr1, " "*tlen, curses.color_pair(cnum) | curses.A_REVERSE)
             win_progsbar.addstr(1, xptr2, cstr, curses.A_BOLD | curses.color_pair(cnum))
             xptr1 += tlen
-            xptr2 += len(cstr) + 3
+            xptr2 += len(cstr)
 
     @staticmethod
-    def draw_multiline(window, begin_y=1, begin_x=1,
+    def draw_multiline(window: curses.window, begin_y=1, begin_x=1,
                           attr:int=0, contents:list=None):
         """
         Displays a multi-line string in left-aligned mode.
@@ -227,14 +261,18 @@ class DisplayScreen:
             self.win_cpu.refresh()
             return None
         item = list(plot_data.keys())
-        self.draw_diagram(self.win_cpu, item[0], "Time", 10, 30, 2, 2, plot_data[item[0]])
-        self.draw_diagram(self.win_cpu, item[1], "Time", 10, 30, 2, 40, plot_data[item[1]])
+        # draw first cpu diagram, start point position (2,2), width height (10,30)
+        self.draw_diagram(self.win_cpu, item[0], "Time", 10, 30, 2, 2, plot_data[item[0]], dmax=100, dmin=0)
+        # draw second cpu diagram, start point position (2,40), width height (10,30)
+        self.draw_diagram(self.win_cpu, item[1], "Time", 10, 30, 2, 40, plot_data[item[1]], dmax=100, dmin=0)
+        # draw top right digits show
         self.draw_multiline(self.win_cpu, 4, 75, curses.A_BOLD | curses.color_pair(COLOR_MAGENTA_BLACK),
                                contents=["iowait", " ", "guest", " ", "cutil"])
         self.draw_multiline(self.win_cpu, 4, 85, curses.A_BOLD | curses.color_pair(COLOR_BLUE_BLACK),
                                contents=["{} %".format(avg_data["iowait"] if "iowait" in avg_data else "NC"), " ",
                                          "{} %".format(avg_data["guest"] if "guest" in avg_data else "NC"), " ",
-                                         "{} %".format(avg_data["cutil"] if "cutil" in avg_data else "NC")])                       
+                                         "{} %".format(avg_data["cutil"] if "cutil" in avg_data else "NC")])     
+        # draw bottom cpu usage proportion bar
         if ("usr","nice","sys","irq","soft","steal","util" in avg_data)[-1]:
             self.draw_progressbar(self.win_cpu, "Usage", 15, 2, 80,
                                   {"us": avg_data["usr"], "ni": avg_data["nice"], "sy": avg_data["sys"],
@@ -410,8 +448,8 @@ class DisplayScreen:
             self.draw_box(win_disk1, "Disk: {}".format(dev[0]))
             self.draw_multiline(win_disk1, 2, 2, curses.A_BOLD,
                                    contents=[info[i].format(rdata[key][0]) for i, key in enumerate(rdata.keys())])
-            self.draw_diagram(win_disk1, item[0], "Time", 10, 20, 2, 35, plot_data[item[0]])
-            self.draw_diagram(win_disk1, item[1], "Time", 10, 20, 2, 65, plot_data[item[1]])
+            self.draw_diagram(win_disk1, item[0], "Time", 10, 20, 2, 35, plot_data[item[0]], dmax=100, dmin=0)
+            self.draw_diagram(win_disk1, item[1], "Time", 10, 20, 2, 65, plot_data[item[1]], dmin=0)
         elif len(dev) >= 2:
             win_disk1 = self.win_storage.derwin(height-2, width//2-1, 1, 1)
             win_disk2 = self.win_storage.derwin(height-2, width//2-1, 1, width//2)
@@ -421,8 +459,8 @@ class DisplayScreen:
                                    contents=[info[i].format(rdata[key][0]) for i, key in enumerate(rdata.keys())])
             self.draw_multiline(win_disk2, 2, 1, curses.A_BOLD,
                                    contents=[info[i].format(rdata[i][1]) for i, key in enumerate(rdata.keys())])
-            self.draw_diagram(win_disk1, item[0], "Time", 8, 18, 2, 24, plot_data[item[0]])
-            self.draw_diagram(win_disk2, item[1], "Time", 8, 18, 2, 24, plot_data[item[1]])
+            self.draw_diagram(win_disk1, item[0], "Time", 8, 18, 2, 24, plot_data[item[0]], dmax=100, dmin=0)
+            self.draw_diagram(win_disk2, item[1], "Time", 8, 18, 2, 24, plot_data[item[1]], dmin=0)
         self.win_storage.refresh()
 
     def display_perf(self, avg_data={},
@@ -525,20 +563,31 @@ class DisplayScreen:
         self.win_notebar.addstr(0, 0, notebarstr + " " * (self.width - len(notebarstr) - 1), curses.A_REVERSE)
         self.win_notebar.refresh()
 
-    def display_from_file(self, csvfile, jsonfile):
+    def display_from_file(self, csvfile: str=None, jsonfile: str=None, use_collector=False):
         """
         Display welcome page, data, progress bar and diagrams in the whole monitor screen.
         """
         try:
             if not self.errstatus:
                 json_data = json.load(jsonfile)
+                logger.info('json_data')
+                logger.info(json_data)
                 interval = json_data["interval"]
                 nic = json_data["network"].split(",")
                 block = json_data["block"].split(",")
 
-                csv_reader = csv.DictReader(csvfile)
-                csv_fields = csv_reader.fieldnames
-                csv_data = [row for row in csv_reader]
+                if use_collector:
+                    collector = Collector(json_data)
+                    logger.info('collector.field_name')
+                    logger.info(collector.field_name)
+                    fields = list(collector.field_name)
+                    csv_data = []
+                else:
+                    csv_reader = csv.DictReader(csvfile)
+                    logger.info('csv_reader.fieldnames')
+                    logger.info(csv_reader.fieldnames)
+                    fields = csv_reader.fieldnames
+                    csv_data = [row for row in csv_reader]
                 avg_data = {
                     "CPU": {},
                     "STORAGE": {},
@@ -547,24 +596,63 @@ class DisplayScreen:
                     "PERF": {},
                     "SYS": {}
                 }
-                field_data = copy.deepcopy(avg_data)
+                # field_data = copy.deepcopy(avg_data)
 
-                for key in csv_fields:
-                    item = key.split('.')
-                    if len(item) > 3:
-                        item[-2] = item[-2] + "." + item[-1]
-                        item.pop()
-                    module, metric = item[0], item[-1]
-                    self.modules.append(module)
-                    field_data[module][metric] = [float(row[key]) for row in csv_data]
-                    avg_data[module][metric] = round(sum(field_data[module][metric]) / len(field_data[module][metric]), 2)
-                del csv_data
-                self.modules = sorted(list(set(self.modules)), key=self.modules.index)
+                # for key in fields:
+                #     item = key.split('.')
+                #     if len(item) > 3:
+                #         item[-2] = item[-2] + "." + item[-1]
+                #         item.pop()
+                #     module, metric = item[0], item[-1]
+                #     self.modules.append(module)
+                #     field_data[module][metric] = [float(row[key]) for row in csv_data]
+                #     avg_data[module][metric] = round(sum(field_data[module][metric]) / len(field_data[module][metric]), 2)
+                # del csv_data
+                # self.modules = sorted(list(set(self.modules)), key=self.modules.index)
 
                 if self.display_welcome() == "ENTER":
+                    listening = True
+                    def listen_user_input():
+                        while listening and self.key != KEY_EXIT:
+                            self.key = self.screen.getch()
+                    x = threading.Thread(target=listen_user_input, args=())
+                    x.start()
                     while self.key != KEY_EXIT:
+                        # update field_data
+                        self.modules = []
+                        field_data = copy.deepcopy(avg_data)
+                        if use_collector:
+                            data = collector.collect_data()
+                            csv_data.append(data)
+                            for index, key in enumerate(fields):
+                                item = key.split('.')
+                                if len(item) > 3:
+                                    item[-2] = item[-2] + "." + item[-1]
+                                    item.pop()
+                                module, metric = item[0], item[-1]
+                                self.modules.append(module)
+                                field_data[module][metric] = [float(row[index]) for row in csv_data]
+                                avg_data[module][metric] = sum(field_data[module][metric]) / len(field_data[module][metric])
+                                avg_data[module][metric] = round(avg_data[module][metric], 2)
+                        else:
+                            for key in fields:
+                                item = key.split('.')
+                                if len(item) > 3:
+                                    item[-2] = item[-2] + "." + item[-1]
+                                    item.pop()
+                                module, metric = item[0], item[-1]
+                                self.modules.append(module)
+                                field_data[module][metric] = [float(row[key]) for row in csv_data]
+                                avg_data[module][metric] = round(sum(field_data[module][metric]) / len(field_data[module][metric]), 2)
+                        self.modules = sorted(list(set(self.modules)), key=self.modules.index)
+
+                        # update screen
                         self.height, self.width = self.screen.getmaxyx()
                         self.display_notebar()
+                        logger.info("avg_data")
+                        logger.info(avg_data["CPU"])
+                        logger.info("field_data")
+                        logger.info(field_data["CPU"])
                         self.display_cpu(avg_data["CPU"], plot_data={"user %": field_data["CPU"]["usr"],
                                                                      "util %": field_data["CPU"]["util"]})
                         self.display_storage(block, avg_data["STORAGE"], plot_data={"util %": field_data["STORAGE"]["util"],
@@ -578,7 +666,8 @@ class DisplayScreen:
                         self.display_system(avg_data["SYS"], plot_data={"FD Util %": field_data["SYS"]["fd-util"],
                                                                         "ldavg-1min": field_data["SYS"]["ldavg-1"]})
                         self.screen.refresh()
-                        self.key = self.screen.getch()
+                        time.sleep(interval)
+                    x.join()
         except Exception as err:
             raise err
         finally:
@@ -590,12 +679,18 @@ class DisplayScreen:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--file',
-                        default="./example/test.csv",
+                        # default="./example/test.csv",
+                        default="",
                         help="collected csv data file path")
     parser.add_argument('-c', '--config',
                         default="/etc/atune_collector/collect_data.json",
                         help="collector configuration json file")
     args = parser.parse_args()
-    with open(args.file, 'r') as csvfile, open(args.config, 'r') as jsonfile:
-        scr = DisplayScreen()
-        scr.display_from_file(csvfile, jsonfile)
+    if args.file:
+        with open(args.file, 'r') as csvfile, open(args.config, 'r') as jsonfile:
+            scr = DisplayScreen()
+            scr.display_from_file(csvfile=csvfile, jsonfile=jsonfile)
+    else:
+        with open(args.config, 'r') as jsonfile:
+            scr = DisplayScreen()
+            scr.display_from_file(jsonfile=jsonfile, use_collector=True)
