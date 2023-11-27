@@ -35,8 +35,8 @@ class Network(Configurator):
 
     def __init__(self, user=None):
         Configurator.__init__(self, user)
-        self._cmd_map = {'xps': ['all', 'off', 'half', 'separate'],
-                'rps': ['all', 'off', 'half', 'separate']}
+        self._cmd_map = {'xps': ['all', 'off', 'half', 'separate', 'multi'],
+                'rps': ['all', 'off', 'half', 'separate', 'multi']}
         self._nic = self._get_nic()
         self._queue_dir = '/sys/class/net/{}/queues'.format(self._nic)
 
@@ -52,6 +52,12 @@ class Network(Configurator):
                 'Failed to get dir under {}'.format(self._queue_dir))
         dir_list = re.findall(pattern, dir_strs)
         core_num = os.cpu_count()
+                
+        multi_qs = len(dir_list)
+        stride = 1 if core_num // multi_qs == 0 else core_num // multi_qs
+        stragglers = 0 if core_num <= multi_qs else core_num % multi_qs
+        cur_cpu = 0
+        dir_list = sorted(dir_list, key=lambda x: int(x.split('-')[1]))
         for index, dir_name in enumerate(dir_list):
             file_path = '{}/{}/{}_cpus'.format(self._queue_dir, dir_name, key)
             shell_cmd(['cat', file_path],
@@ -75,13 +81,56 @@ class Network(Configurator):
                     offset = index % half_num
                     val_format = 1 << (offset + half_num + core_num % 2)
                 set_value = f"{val_format:x}"
-            else: # value == 'separate'
+            elif value == 'separate':
                 num = 1 << (index % core_num)
                 set_value = f"{num:x}"
+            else: # value = multi:
+                str_value = ''
+                gsize = stride if index >= stragglers else stride + 1
+                for _ in range(gsize):
+                    str_value = str(cur_cpu) + ' ' + str_value
+                    cur_cpu += 1
+                set_value = self._u32list(str_value)
 
             shell_cmd(['sh', '-c', 'echo {} > {}'.format(set_value, file_path)],
                     'Failed to set {} to {}'.format(key, file_path))
         return 0
+
+    @staticmethod
+    def _u32list(cpulist):
+        max_cpu = 0
+        ii = 0
+
+        for _cpu in cpulist.split():
+            if max_cpu < int(_cpu):
+                max_cpu = int(_cpu)
+
+        #init a bitmap
+        map = [0] * (max_cpu + 1)
+
+        # set bit map according to cpulist
+        for _cpu in cpulist.split():
+            map[int(_cpu)] = 1
+
+        #format a u32list
+        seg = 0
+        mask = ''
+        for ii in range(max_cpu + 1):
+            if ii % 4 == 0 and ii != 0:
+                seg = format(seg, 'x')
+                mask = seg + mask
+                seg = 0
+            if ii % 32 == 0 and ii != 0:
+                mask = ',' + mask
+            cur = map[ii]
+            if cur == 1:
+                val = 1 << (ii % 4)
+                seg += val
+
+        if seg != 0:
+            seg = format(seg, 'x')
+            mask = seg + mask
+        return mask
 
     def _set(self, key, value):
         if not key.lower() in self._cmd_map or not value.lower() in self._cmd_map[key.lower()]:
