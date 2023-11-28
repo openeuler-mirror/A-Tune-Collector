@@ -36,7 +36,8 @@ class Network(Configurator):
     def __init__(self, user=None):
         Configurator.__init__(self, user)
         self._cmd_map = {'xps': ['all', 'off', 'half', 'separate', 'multi'],
-                'rps': ['all', 'off', 'half', 'separate', 'multi']}
+                'rps': ['all', 'off', 'half', 'separate', 'multi'],
+                'rfs': ['on', 'off']}
         self._nic = self._get_nic()
         self._queue_dir = '/sys/class/net/{}/queues'.format(self._nic)
 
@@ -47,17 +48,21 @@ class Network(Configurator):
         config.read('/etc/atuned/atuned.cnf')
         return config.get('system', 'network')
 
-    def _set_cpus(self, key, value, pattern):
+    def _get_init(self, pattern):
         dir_strs = shell_cmd(['ls', self._queue_dir], 
                 'Failed to get dir under {}'.format(self._queue_dir))
         dir_list = re.findall(pattern, dir_strs)
+        dir_list = sorted(dir_list, key=lambda x: int(x.split('-')[1]))
         core_num = os.cpu_count()
+        return dir_list, core_num
+
+    def _set_cpus(self, key, value, pattern):
+        dir_list, core_num = self._get_init(pattern)
                 
         multi_qs = len(dir_list)
         stride = 1 if core_num // multi_qs == 0 else core_num // multi_qs
         stragglers = 0 if core_num <= multi_qs else core_num % multi_qs
         cur_cpu = 0
-        dir_list = sorted(dir_list, key=lambda x: int(x.split('-')[1]))
         for index, dir_name in enumerate(dir_list):
             file_path = '{}/{}/{}_cpus'.format(self._queue_dir, dir_name, key)
             shell_cmd(['cat', file_path],
@@ -84,13 +89,15 @@ class Network(Configurator):
             elif value == 'separate':
                 num = 1 << (index % core_num)
                 set_value = f"{num:x}"
-            else: # value = multi:
-                str_value = ''
+            elif value == 'multi': # value = multi:
+                list_cpu = []
                 gsize = stride if index >= stragglers else stride + 1
                 for _ in range(gsize):
-                    str_value = str(cur_cpu) + ' ' + str_value
+                    list_cpu.append(cur_cpu)
                     cur_cpu += 1
-                set_value = self._u32list(str_value)
+                set_value = self._u32list(list_cpu)
+            else:
+                raise SetConfigError("cannot set {} to {}".format(key, value))
 
             shell_cmd(['sh', '-c', 'echo {} > {}'.format(set_value, file_path)],
                     'Failed to set {} to {}'.format(key, file_path))
@@ -101,16 +108,15 @@ class Network(Configurator):
         max_cpu = 0
         ii = 0
 
-        for _cpu in cpulist.split():
-            if max_cpu < int(_cpu):
-                max_cpu = int(_cpu)
+        for _cpu in cpulist:
+            max_cpu = max(max_cpu, _cpu)
 
         #init a bitmap
         map = [0] * (max_cpu + 1)
 
         # set bit map according to cpulist
-        for _cpu in cpulist.split():
-            map[int(_cpu)] = 1
+        for _cpu in cpulist:
+            map[_cpu] = 1
 
         #format a u32list
         seg = 0
@@ -131,6 +137,30 @@ class Network(Configurator):
             seg = format(seg, 'x')
             mask = seg + mask
         return mask
+    
+    def _set_rfs(self, value, pattern):
+        dir_list, _ = self._get_init(pattern)
+        for dir_name in dir_list:
+            file_path = '{}/{}/rps_flow_cnt'.format(self._queue_dir, dir_name)
+            shell_cmd(['cat', file_path],
+                    'Failed to set rfs={}: does not support for rfs'.format(value))
+            if value == 'off':
+                set_value = 0
+            elif value == 'on':
+                set_value = 4096
+            else:
+                raise SetConfigError("cannot set rfs to {}".format(value))
+            shell_cmd(['sh', '-c', 'echo {} > {}'.format(set_value, file_path)],
+                    'Failed to set rfs to {}'.format(file_path))
+            
+        if value == 'off':
+            entries = 0
+        elif value == 'on':
+            entries = 4096 * len(dir_list)
+        entries_path = '/proc/sys/net/core/rps_sock_flow_entries'
+        shell_cmd(['sh', '-c', 'echo {} > {}'.format(entries, entries_path)],
+                    'Failed to set rfs to {}'.format(entries_path))
+        return 0
 
     def _set(self, key, value):
         if not key.lower() in self._cmd_map or not value.lower() in self._cmd_map[key.lower()]:
@@ -140,6 +170,8 @@ class Network(Configurator):
             self._set_cpus(key.lower(), value.lower(), r'tx-\d+')
         elif key == 'rps':
             self._set_cpus(key.lower(), value.lower(), r'rx-\d+')
+        elif key == 'rfs':
+            self._set_rfs(value.lower(), r'rx-\d+')
 
         return 0
     
