@@ -36,10 +36,12 @@ class ProcSched(Monitor):
         self.__interval = 1
         self.__applications = []
         self.__pids = []
+        self.__proc_flag = []
  
     def _get(self, para=None):
         output = ""
         pids = []
+        proc_flag = []
         if para is not None:
             opts, _ = getopt.getopt(para.split(), None, ['interval=', 'app='])
             for opt, val in opts:
@@ -67,9 +69,13 @@ class ProcSched(Monitor):
         
         for app in self.__applications:
             pid = subprocess.getoutput(
-                "ps -A | grep {} | awk '{{print $1}}'".format(app)).split()[0]
-            pids.append(pid)
+                "ps -A | grep {} | awk '{{print $1}}'".format(app)).split()
+            app_pid_flag = True if pid else False
+            proc_flag.append(app_pid_flag)
+            if pid:
+                pids.append(pid[0])
         self.__pids = pids
+        self.__proc_flag = proc_flag
 
         for pid in self.__pids:
             out = subprocess.check_output(
@@ -101,7 +107,7 @@ class ProcSched(Monitor):
                 continue
 
         pattern = re.compile(
-            r"(\w+)\ {1,}\:\ {1,}(\d+.\d+)",
+            r"(\w+)\ {1,}\:\ {1,}(\d+\.?\d*)",
             re.I | re.UNICODE | re.MULTILINE)
         search_obj = pattern.findall(info)
         search_list = []
@@ -112,13 +118,20 @@ class ProcSched(Monitor):
                 search_list.append(obj[0])
             search_list.append(obj[1])
         if len(search_obj) == 0:
-            err = LookupError("Fail to find data")
-            LOGGER.error("%s.%s: %s", self.__class__.__name__,
-                         inspect.stack()[0][3], str(err))
-            raise err
+            return " " + " ".join(['0'] * len(keys))
+        proc_data = []
+        proc_keys = 0
+        proc_step = len(set(keys))
 
-        while start <= len(self.__applications) * len(keys):  
-            for key in keys:
-                ret = ret + " " + search_list[search_list.index(key, start)+1]
-                start = search_list.index(key, start) + 1
+        for key in keys:
+            if len(proc_data) >= self.__proc_flag.count(True) * proc_step:
+                break
+            proc_data.append(search_list[search_list.index(key, start) + 1])
+            start = search_list.index(key, start) + 1
+        for pid_flag in self.__proc_flag:
+            if not pid_flag:
+                ret = ret + " " + " ".join(['0'] * proc_step)
+            else:
+                ret = ret + " " + " ".join(proc_data[proc_keys:(proc_keys + proc_step)])
+                proc_keys += proc_step
         return ret
