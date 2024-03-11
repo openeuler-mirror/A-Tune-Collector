@@ -68,8 +68,9 @@ class ProcSched(Monitor):
                         raise err
         
         for app in self.__applications:
-            pid = subprocess.getoutput(
-                "ps -A | grep {} | awk '{{print $1}}'".format(app)).split()
+            pid = subprocess.getoutput("ps -A")
+            app_processes = [line for line in pid.split('\n') if app in line]
+            pid = [line.split()[0] for line in app_processes]
             app_pid_flag = True if pid else False
             proc_flag.append(app_pid_flag)
             if pid:
