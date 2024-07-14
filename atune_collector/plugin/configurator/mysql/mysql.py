@@ -18,6 +18,8 @@ The sub class of the Configurator, used to change the /etc/my.cnf config.
 
 import logging
 import os
+import re
+import subprocess
 from ..common import Configurator
 
 LOGGER = logging.getLogger(__name__)
@@ -61,13 +63,34 @@ class Mysql(Configurator):
             if line.split('=')[0].rstrip() == start_with:
                 return True, ind
         return False, ind
-    
+
+    def extract_value(self, value):
+        if "!DISK_SIZE!" in value:
+            if re.match(r'^innodb_buffer_pool_size\s*=\s*"!DISK_SIZE!"\s*$', value):
+                return None, "!DISK_SIZE!"
+            else:
+                match = re.search(r'([0-9]+\.?[0-9]*)\s*\*\s*"!DISK_SIZE!"|\s*"!DISK_SIZE!"\s*\*\s*([0-9]+\.?[0-9]*)', value)
+                if match:
+                    numbers = match.groups()
+                    number = numbers[0] if numbers[0] is not None else numbers[1]
+                    try:
+                        return float(number), "!DISK_SIZE!"
+                    except ValueError:
+                        return None, "!DISK_SIZE!"
+                else:
+                    return None, "!DISK_SIZE!"
+        else:
+            return None, "!DISK_SIZE!"
+
     def _set(self, key, value):
         self._init_file()
         with open(self.__file_path, 'r', 0o400) as f:
             lines = f.readlines()
 
         key_exist, ind = self.__check_file_exists(lines, key)
+        number, value = self.extract_value(value)
+        if number is not None:
+            value = rewrite_value(number, value)
         new_line = key + " = " + value + "\n"
         if not key_exist:
             lines.insert(self.__mysqld_ind, new_line)
@@ -87,4 +110,11 @@ class Mysql(Configurator):
     @staticmethod
     def check(config1, config2):
         return True
+
+def rewrite_value(number, value):
+    command = ["sh", "-c", "df -h / | awk 'NR==2 {print $4}' | tr -d 'G'"]
+    output = subprocess.run(command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if output.returncode != 0:
+        raise SetConfigError("Failed to get cpu number")
+    return int(float(number) * int(output.stdout.decode()))
 
