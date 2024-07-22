@@ -80,7 +80,7 @@ class Mysql(Configurator):
                 else:
                     return None, "!DISK_SIZE!"
         else:
-            return None, "!DISK_SIZE!"
+            return None, value
 
     def _set(self, key, value):
         self._init_file()
@@ -88,6 +88,8 @@ class Mysql(Configurator):
             lines = f.readlines()
 
         key_exist, ind = self.__check_file_exists(lines, key)
+        if value == "!CPU_CORE!":
+            value = rewrite_cpu_value(value)
         number, value = self.extract_value(value)
         if number is not None:
             value = rewrite_value(number, value)
@@ -111,10 +113,18 @@ class Mysql(Configurator):
     def check(config1, config2):
         return True
 
+
 def rewrite_value(number, value):
     command = ["sh", "-c", "df -h / | awk 'NR==2 {print $4}' | tr -d 'G'"]
     output = subprocess.run(command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if output.returncode != 0:
         raise SetConfigError("Failed to get cpu number")
-    return int(float(number) * int(output.stdout.decode()))
+    return str(int(float(number) * int(output.stdout.decode()))) + "G"
 
+
+def rewrite_cpu_value(value):
+    command = ["grep", "processor", "/proc/cpuinfo"]
+    output = subprocess.run(command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if output.returncode != 0:
+        raise SetConfigError("Failed to get cpu number")
+    return str(output.stdout.decode().count("\n"))
