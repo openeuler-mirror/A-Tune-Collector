@@ -67,12 +67,14 @@ class Grub2(Configurator):
         start = search_obj.span(1)
         cmd = search_obj.span(2)
         end = search_obj.span(3)
-        return {"START": start[0], "CMD": cmd[0], "END": end[1]}
+        cmd_start_byte = len(ctx[:cmd[0]].encode('utf-8'))
+
+        return {"START": start[0], "CHAR_CMD": cmd[0], "BYTE_CMD": cmd_start_byte, "END": end[1]}
 
     def _get(self, key, _):
         entry = self.__get_cfg_entry(self.__kernel_ver)
         with open(self.__cfg_file, 'r') as file:
-            file.seek(entry["CMD"])
+            file.seek(entry["BYTE_CMD"])
             cmd = file.readline()
 
         keypos = Utils.get_keypos(cmd, key)
@@ -96,16 +98,16 @@ class Grub2(Configurator):
             new = "{key}={val}".format(key=key, val=value)
 
         with open(self.__cfg_file, 'r+') as file:
-            file.seek(entry["CMD"])
+            file.seek(entry["BYTE_CMD"])
             cmd = file.readline()
 
             keypos = Utils.get_keypos(cmd, key)
             if keypos != -1:
                 old = cmd[keypos:].split("\n")[0].split()[0]
-                file_modify(file, entry["CMD"] + keypos,
-                            entry["CMD"] + keypos + len(old) - 1, new)
+                file_modify(file, entry["CHAR_CMD"] + keypos,
+                            entry["CHAR_CMD"] + keypos + len(old) - 1, new)
             else:
-                file_modify(file, entry["CMD"] + len(cmd) - 1, -1, " " + new)
+                file_modify(file, entry["CHAR_CMD"] + len(cmd) - 1, -1, " " + new)
 
         active = Utils.get_value(key)
         if value == active:
