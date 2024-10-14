@@ -31,6 +31,8 @@ from .ulimit import *
 from .mysql import *
 from .redis import *
 from .nginx import *
+from .postgresql import *
+from .memcache import *
 
 __all__ = ["exceptions",
            "affinity",
@@ -47,5 +49,8 @@ __all__ = ["exceptions",
            "mysql",
            "redis",
            "nginx",
+           "postgresql",
+           "memcache",
            "common"]
+
 
