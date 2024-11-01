@@ -17,6 +17,8 @@ The sub class of the Configurator, used to change the memcache config.
 
 import logging
 import os
+import re
+import math
 import subprocess
 from ..exceptions import GetConfigError, SetConfigError
 from ..common import Configurator
@@ -35,6 +37,7 @@ class Memcache(Configurator):
         self.__file_dir = "/etc/sysconfig/"
         self.__file_path = self.__file_dir + "memcached"
 
+
     def _init_file(self):
         if not os.path.isdir(self.__file_dir):
             os.mkdir(self.__file_dir)
@@ -52,6 +55,8 @@ class Memcache(Configurator):
         if len(err) != 0:
             raise SetConfigError("Failed to set {}: {}".format(key, err))
         num_lines = out.count("\n")
+        if "!CPU_CORE!" in value:
+            value = rewrite_cpu_value(value)
         new_line = key + " = " + value
         if num_lines == 0:
             with open(self.__file_path, 'a', 0o644) as f:
@@ -70,6 +75,7 @@ class Memcache(Configurator):
 
     def _backup(self, config, _):
         return str(config)
+    
 
     @staticmethod
     def check(config1, config2):
@@ -79,6 +85,37 @@ class Memcache(Configurator):
     def execute_cmd(cmd):
         output = subprocess.run(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return output.stdout.decode(), output.stderr.decode()[:-1]
+
+
+def rewrite_cpu_value(value):
+    command = ["grep", "processor", "/proc/cpuinfo"]
+    output = subprocess.run(command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if output.returncode != 0:
+        raise SetConfigError("Failed to get cpu number")
+    number, value = extract_value(value)
+    if number is not None:
+        return str(math.ceil(int(float(number) * int(output.stdout.decode().count("\n")))))
+    else:
+        return str(output.stdout.decode().count("\n"))
+
+
+def extract_value(value):
+    if re.match(r'^threads\s*=\s*"!CPU_CORE!"\s*$', value):
+        return None, "!CPU_CORE!"
+    else:
+        match = re.search(r'([0-9]+\.?[0-9]*)\s*\*\s*"!CPU_CORE!"|\s*"!CPU_CORE!"\s*\*\s*([0-9]+\.?[0-9]*)', value)
+        if match:
+            numbers = match.groups()
+            number = numbers[0] if numbers[0] is not None else numbers[1]
+            try:
+                return float(number), "!CPU_CORE!"
+            except ValueError:
+                return None, "!CPU_CORE!"
+        else:
+            return None, "!CPU_CORE!"
+    
+
+
 
 
 
