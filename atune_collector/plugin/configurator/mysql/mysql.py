@@ -118,7 +118,7 @@ def rewrite_value(number, value):
     command = ["sh", "-c", "df -h / | awk 'NR==2 {print $4}' | tr -d 'G'"]
     output = subprocess.run(command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if output.returncode != 0:
-        raise SetConfigError("Failed to get cpu number")
+        raise SetConfigError("Failed to get disk size")
     return str(int(float(number) * int(output.stdout.decode()))) + "G"
 
 
@@ -128,3 +128,4 @@ def rewrite_cpu_value(value):
     if output.returncode != 0:
         raise SetConfigError("Failed to get cpu number")
     return str(output.stdout.decode().count("\n"))
+
