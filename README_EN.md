@@ -1,22 +1,24 @@
 English | [简体中文](./README.md)
+
 # A-Tune-Collector
 
-#### Introduction
+## Introduction
+
 The A-Tune-Collector is used to collect various system resources and can also be used as the collector of the A-Tune project.
 
-#### Installation
+## Installation
 
 If the collector is used for the A-Tune project, run the following command to install the collector.
 
-```
+```bash
 python3 setup.py install
 ```
 
-#### Instructions
+## Instructions
 
 Collection Command Format
 
-```
+```bash
 cd atune_collector
 python3 collect_data.py [OPTIONS]
 ```
@@ -31,13 +33,13 @@ Example
 
 - Use the default resource collection configuration file.
 
-  ```
+  ```bash
   python3 collect_data.py
   ```
 
 - Use the specified resource collection configuration file.
 
-  ```
+  ```bash
   python3 collect_data.py -c collect_data.json
   ```
 
@@ -48,30 +50,31 @@ Table 1 **collect_data.json** file
 | Parameter             | Description                                                  | Type             | Value Range |
 | ---------------- | ------------------------------------------------------------ | ---------------- | ----------- |
 | network          | NIC to be collected.                           | Character string | -           |
-| block            | Disk to be collected.                          | Character string | -           |
-| sample_num       | Sample number to be collected.                    | Integer          | > 0          |
+| block            | Drive to be collected.                         | Character string | -           |
+| application | Application to be collected. | Character string | - |
+| sample_num       | Number of samples collected. | Integer          | > 0          |
 | interval         | Interval for collecting data, in seconds.                    | Integer          | > 0          |
 | output_dir       | Path for storing collected data.                        | Character string | -           |
 | workload_type    | Application load type of the collection environment, used as output file name. The default value is **default**. | Character string | -           |
 | collection_items | Table 2 lists the system parameters to be collected.         | List             | -           |
 
-When data collecting is finished, the data will be saved as: `${output_dir}/${workload_type}-${finish_timestamp}.csv`
+When data collection is complete, the data will be saved as: `${output_dir}/${workload_type}-${finish_timestamp}.csv`
 
-Table 2 Description of the **collection_items** configuration
+Table 2 **collection_items** configuration
 
 | Parameter      | Description                                                  | Type             | Value Range |
 | --------- | ------------------------------------------------------------ | ---------------- | ----------- |
 | name      | Name of the item to be collected.                            | Character string | -           |
 | module    | Category of the item to be collected. The category must match the definition of the corresponding collection module. | Character string | -           |
 | purpose   | Type of the item to be collected. The type must match the definition of the corresponding collection module. | Character string | -           |
-| metrics   | Indicators of the item to be collected.                      | List             | -           |
+| metrics   | Metrics of the item to be collected.                | List             | -           |
 | threshold | Threshold of the item to be collected.                       | Integer          | -           |
 
 Example
 
 The following is an example of the **collect_data.json** file.
 
-```
+```bash
 {
   "network": "eth0",
   "block": "sda",
@@ -207,6 +210,6 @@ The following is an example of the **collect_data.json** file.
 }
 ```
 
-#### Related Information
+## Related Information
 
-A-Tune project：https://gitee.com/openeuler/A-Tune
+[A-Tune project](https://gitcode.com/openeuler/A-Tune)
