@@ -15,6 +15,7 @@
 The sub class of the Configurator, used to change the /sys/* config.
 """
 
+import os
 import re
 
 from ..common import Configurator
@@ -29,8 +30,27 @@ class Sysfs(Configurator):
     def __init__(self, user=None):
         Configurator.__init__(self, user)
 
+    def _getpath(self, key):
+        """
+        Build the sysfs path for the given key and make sure it can not
+        escape the sysfs option base directory.
+
+        :param key: The sysfs config key, relative to self._option
+        :returns: The validated absolute path
+        :raises ValueError: Fail, invalid key or path traversal attempt
+        """
+        if not isinstance(key, str) or not key or "\x00" in key:
+            raise ValueError("Invalid sysfs key: {!r}".format(key))
+
+        base = os.path.realpath(self._option)
+        path = os.path.realpath(os.path.join(base, key))
+        if path != base and not path.startswith(base + os.sep):
+            raise ValueError("Invalid sysfs key: {!r}".format(key))
+        return path
+
     def _get(self, key, _):
-        with open("{opt}/{key}".format(opt=self._option, key=key), mode='r',
+        path = self._getpath(key)
+        with open(path, mode='r',
                   buffering=-1, encoding=None, errors=None, newline=None, closefd=True) as file:
             ret = file.read()
 
@@ -41,7 +61,10 @@ class Sysfs(Configurator):
         return ret
 
     def _set(self, key, value):
-        with open("{opt}/{key}".format(opt=self._option, key=key), mode='w',
+        if not isinstance(value, str) or "\x00" in value:
+            raise ValueError("Invalid sysfs value for key: {!r}".format(key))
+        path = self._getpath(key)
+        with open(path, mode='w',
                   buffering=-1, encoding=None, errors=None, newline=None, closefd=True) as file:
             file.write(value)
         return 0
