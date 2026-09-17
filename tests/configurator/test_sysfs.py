@@ -30,3 +30,14 @@ class TestSysfs:
             assert value is not None
         except FileNotFoundError:
             assert True
+
+    def test_reject_path_traversal(self):
+        """test sysfs rejects keys escaping the sysfs base"""
+        sysfs = Sysfs(self.user)
+        for key in ("../../etc/shadow", "/etc/shadow",
+                    "kernel/../../etc/passwd", "/sys/../etc/shadow"):
+            try:
+                sysfs.get(key)
+                assert False
+            except ValueError:
+                assert True
